@@ -42,7 +42,7 @@ export default function CreateDropPage() {
         name: form.name,
         description: form.description,
         price: priceInMicro,
-        paymentDenom: 'umin',
+        paymentDenom: 'uinit',
         totalSupply: parseInt(form.totalSupply),
         maxPerUser: parseInt(form.maxPerUser),
         startTime: startTimestamp,

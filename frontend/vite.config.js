@@ -4,50 +4,25 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
-  const LCD = env.VITE_LCD_ENDPOINT || 'http://192.168.110.117:1317';
-  const RPC = env.VITE_RPC_ENDPOINT || 'http://192.168.110.117:26657';
-  const CHAIN_ID = env.VITE_CHAIN_ID || 'initiadrops-1';
-  const GAS_DENOM = env.VITE_GAS_DENOM || 'umin';
+  const LCD = env.VITE_LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
+  const RPC = env.VITE_RPC_ENDPOINT || 'https://rpc.testnet.initia.xyz';
+  const CHAIN_ID = env.VITE_CHAIN_ID || 'initiation-2';
+  const GAS_DENOM = env.VITE_GAS_DENOM || 'uinit';
 
-  // Mock L1 chain (required by InterwovenKit — it always looks for is_l1: true)
-  const L1_CHAIN = {
-    chain_id: 'initiation-2',
-    chain_name: 'initia',
-    pretty_name: 'Initia L1',
-    network_type: 'testnet',
-    bech32_prefix: 'init',
-    fees: {
-      fee_tokens: [{
-        denom: 'uinit',
-        fixed_min_gas_price: 0.15,
-        low_gas_price: 0.15,
-        average_gas_price: 0.15,
-        high_gas_price: 0.4,
-      }],
-    },
-    apis: {
-      rpc: [{ address: 'https://rpc.testnet.initia.xyz' }],
-      rest: [{ address: 'https://lcd.testnet.initia.xyz' }],
-      indexer: [{ address: 'https://lcd.testnet.initia.xyz' }],
-    },
-    metadata: {
-      is_l1: true,
-    },
-  };
-
+  // L1 chain definition (our contract is deployed directly on L1 testnet)
   const CHAIN_DATA = {
     chain_id: CHAIN_ID,
-    chain_name: 'initiadrops',
-    pretty_name: 'DropPilot',
+    chain_name: 'initia',
+    pretty_name: 'DropPilot on Initia',
     network_type: 'testnet',
     bech32_prefix: 'init',
     fees: {
       fee_tokens: [{
         denom: GAS_DENOM,
-        fixed_min_gas_price: 0.15,
-        low_gas_price: 0.15,
-        average_gas_price: 0.15,
-        high_gas_price: 0.4,
+        fixed_min_gas_price: 0.015,
+        low_gas_price: 0.015,
+        average_gas_price: 0.015,
+        high_gas_price: 0.04,
       }],
     },
     apis: {
@@ -56,12 +31,11 @@ export default defineConfig(({ mode }) => {
       indexer: [{ address: LCD }],
     },
     metadata: {
-      is_l1: false,
-      minitia: { type: 'minimove', version: 'v1.1.11' },
+      is_l1: true,
     },
   };
 
-  const chainsJson = JSON.stringify([L1_CHAIN, CHAIN_DATA]);
+  const chainsJson = JSON.stringify([CHAIN_DATA]);
   const profilesJson = JSON.stringify([]);
 
   // Dev: intercept requests with mock data

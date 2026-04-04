@@ -41,7 +41,7 @@ export default function MyItemsPage() {
     }
     try {
       const priceMicro = parseInt(price) * 1_000_000;
-      const result = await createListing(dropId, 1, priceMicro, 'umin');
+      const result = await createListing(dropId, 1, priceMicro, 'uinit');
       alert(`Listed! TX: ${result.transactionHash}`);
     } catch (err) {
       alert(`Listing failed: ${err.message}`);

@@ -15,28 +15,28 @@ import './index.css';
 
 // ===== CONFIGURATION (driven by env vars for production) =====
 export const MODULE_ADDRESS = import.meta.env.VITE_MODULE_ADDRESS || 'init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf';
-export const GAS_DENOM = import.meta.env.VITE_GAS_DENOM || 'umin';
-export const CHAIN_ID = import.meta.env.VITE_CHAIN_ID || 'initiadrops-1';
-export const LCD_ENDPOINT = import.meta.env.VITE_LCD_ENDPOINT || 'http://192.168.110.117:1317';
-export const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'http://192.168.110.117:26657';
+export const GAS_DENOM = import.meta.env.VITE_GAS_DENOM || 'uinit';
+export const CHAIN_ID = import.meta.env.VITE_CHAIN_ID || 'initiation-2';
+export const LCD_ENDPOINT = import.meta.env.VITE_LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
+export const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'https://rpc.testnet.initia.xyz';
 export const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'http://localhost:3100';
 // ==============================================================
 
-// Custom chain definition for our local rollup
+// Chain definition — deployed on Initia L1 testnet
 const INITIA_DROPS_CHAIN = {
   chain_id: CHAIN_ID,
-  chain_name: 'initiadrops',
-  pretty_name: 'DropPilot',
+  chain_name: 'initia',
+  pretty_name: 'DropPilot on Initia',
   network_type: 'testnet',
   bech32_prefix: 'init',
   fees: {
     fee_tokens: [
       {
         denom: GAS_DENOM,
-        fixed_min_gas_price: 0.15,
-        low_gas_price: 0.15,
-        average_gas_price: 0.15,
-        high_gas_price: 0.4,
+        fixed_min_gas_price: 0.015,
+        low_gas_price: 0.015,
+        average_gas_price: 0.015,
+        high_gas_price: 0.04,
       },
     ],
   },
@@ -46,11 +46,7 @@ const INITIA_DROPS_CHAIN = {
     indexer: [{ address: LCD_ENDPOINT }],
   },
   metadata: {
-    is_l1: false,
-    minitia: {
-      type: 'minimove',
-      version: 'v1.1.11',
-    },
+    is_l1: true,
   },
 };
 

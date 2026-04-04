@@ -12,9 +12,9 @@ import { createServer } from 'http';
  * 5. Also monitors secondary market for deals under max price
  */
 
-const LCD = process.env.LCD_ENDPOINT || 'http://localhost:1317';
+const LCD = process.env.LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
 const MODULE = process.env.MODULE_ADDRESS;
-const CHAIN_ID = process.env.CHAIN_ID || 'initiadrops-1';
+const CHAIN_ID = process.env.CHAIN_ID || 'initiation-2';
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '5000');
 const PORT = parseInt(process.env.PORT || process.env.AGENT_PORT || '3100');
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
