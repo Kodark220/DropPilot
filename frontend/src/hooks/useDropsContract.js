@@ -8,17 +8,17 @@ import { MODULE_ADDRESS, GAS_DENOM, LCD_ENDPOINT } from '../main';
 export function useDropsContract() {
   const { address, requestTxBlock } = useInterwovenKit();
 
-  // Build a MsgExecute for calling a Move entry function
+  // Build a MsgExecuteJSON for calling a Move entry function
   function buildMoveExecuteMsg(functionName, typeArgs = [], args = []) {
     return {
-      typeUrl: '/initia.move.v1.MsgExecute',
+      typeUrl: '/initia.move.v1.MsgExecuteJSON',
       value: {
         sender: address,
         module_address: MODULE_ADDRESS,
         module_name: 'drops',
         function_name: functionName,
         type_args: typeArgs,
-        args: args.map((a) => btoa(String(a))), // base64 encode args
+        args: args.map((a) => JSON.stringify(String(a))),
       },
     };
   }
