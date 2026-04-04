@@ -20,7 +20,20 @@ const GAS_DENOM = process.env.GAS_DENOM || 'uinit';
 const MNEMONIC = process.env.AGENT_MNEMONIC;
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '15000');
 const PORT = parseInt(process.env.PORT || process.env.AGENT_PORT || '3100');
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const CORS_ORIGIN = (process.env.CORS_ORIGIN || '*').replace(/\/+$/, '');
+
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = CORS_ORIGIN === '*'
+  ? null // allow all
+  : new Set(CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/+$/, '')));
+
+function getCorsOrigin(req) {
+  if (!ALLOWED_ORIGINS) return '*';
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.has(origin)) return origin;
+  // Always allow the first configured origin as default
+  return CORS_ORIGIN.split(',')[0].trim();
+}
 
 // ==================== Wallet Setup ====================
 const key = new MnemonicKey({ mnemonic: MNEMONIC });
@@ -224,7 +237,8 @@ function parseBody(req) {
 
 function startAPI() {
   const server = createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', CORS_ORIGIN);
+    const origin = getCorsOrigin(req);
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
