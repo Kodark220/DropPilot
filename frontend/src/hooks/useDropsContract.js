@@ -94,16 +94,16 @@ export function useDropsContract() {
   const { address, requestTxBlock } = useInterwovenKit();
 
   // Build a MsgExecute with BCS-encoded args
-  function buildMoveExecuteMsg(functionName, typeArgs = [], bcsArgs = []) {
+  function buildMoveExecuteMsg(fnName, typeArgs = [], bcsArgs = []) {
     if (!address) throw new Error('Wallet not connected');
     return {
       typeUrl: '/initia.move.v1.MsgExecute',
       value: {
         sender: address,
-        module_address: MODULE_ADDRESS,
-        module_name: 'drops',
-        function_name: functionName,
-        type_args: typeArgs,
+        moduleAddress: MODULE_ADDRESS,
+        moduleName: 'drops',
+        functionName: fnName,
+        typeArgs: typeArgs,
         args: bcsArgs, // Uint8Array[] — proto repeated bytes field
       },
     };
@@ -172,8 +172,8 @@ export function useDropsContract() {
     const msg = {
       typeUrl: '/cosmos.bank.v1beta1.MsgSend',
       value: {
-        from_address: address,
-        to_address: MODULE_ADDRESS,
+        fromAddress: address,
+        toAddress: MODULE_ADDRESS,
         amount: [{ denom: GAS_DENOM, amount: String(amount) }],
       },
     };
