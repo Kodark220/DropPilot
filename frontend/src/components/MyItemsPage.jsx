@@ -44,7 +44,12 @@ export default function MyItemsPage() {
       const result = await createListing(dropId, 1, priceMicro, 'uinit');
       alert(`Listed! TX: ${result.transactionHash}`);
     } catch (err) {
-      alert(`Listing failed: ${err.message}`);
+      const msg = err.message || '';
+      if (msg.includes('0x9000d')) {
+        alert('Listing failed: You don\'t own any items from this drop. Purchase first!');
+      } else {
+        alert(`Listing failed: ${msg}`);
+      }
     }
   };
 
