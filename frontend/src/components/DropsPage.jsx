@@ -152,21 +152,15 @@ function DropCard({ drop, onPurchase, onAutoBuy, index }) {
           {/* Action buttons */}
           <div className="flex gap-2 pt-1">
             {status === 'live' && (
-              <>
-                <Button className="flex-1 gap-2" size="sm" onClick={() => onPurchase(drop.id, 1)}>
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Buy Now
-                </Button>
-                <Button variant="agent" size="sm" className="gap-1.5" onClick={() => onAutoBuy(drop.id)}>
-                  <Bot className="w-3.5 h-3.5" />
-                  Auto
-                </Button>
-              </>
+              <Button className="w-full gap-2" size="sm" onClick={() => onPurchase(drop.id, 1)}>
+                <ShoppingCart className="w-3.5 h-3.5" />
+                Buy Now
+              </Button>
             )}
             {status === 'upcoming' && (
-              <Button variant="agent" className="w-full gap-2" size="sm">
+              <Button variant="agent" className="w-full gap-2" size="sm" onClick={() => onAutoBuy(drop.id)}>
                 <Bot className="w-3.5 h-3.5" />
-                Set Agent Alert
+                Auto Buy with Agent
               </Button>
             )}
             {(status === 'ended' || status === 'sold-out') && (
