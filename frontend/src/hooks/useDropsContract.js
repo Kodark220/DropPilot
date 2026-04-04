@@ -104,7 +104,7 @@ export function useDropsContract() {
         module_name: 'drops',
         function_name: functionName,
         type_args: typeArgs,
-        args: bcsArgs.map((a) => uint8ArrayToBase64(a)),
+        args: bcsArgs, // Uint8Array[] — proto repeated bytes field
       },
     };
   }

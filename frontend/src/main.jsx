@@ -43,7 +43,7 @@ const INITIA_DROPS_CHAIN = {
   apis: {
     rpc: [{ address: RPC_ENDPOINT }],
     rest: [{ address: LCD_ENDPOINT }],
-    indexer: [{ address: LCD_ENDPOINT }],
+    indexer: [{ address: 'https://indexer.initiation-2.initia.xyz' }],
   },
   metadata: {
     is_l1: true,

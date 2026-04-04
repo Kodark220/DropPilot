@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
     apis: {
       rpc: [{ address: RPC }],
       rest: [{ address: LCD }],
-      indexer: [{ address: LCD }],
+      indexer: [{ address: 'https://indexer.initiation-2.initia.xyz' }],
     },
     metadata: {
       is_l1: true,
