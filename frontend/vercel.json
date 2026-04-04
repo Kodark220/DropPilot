@@ -3,7 +3,8 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/indexer/(.*)", "destination": "/api/indexer/$1" },
+    { "source": "/indexer/dex/v1/check_lp_tokens", "destination": "/api/indexer/dex/v1/check_lp_tokens" },
+    { "source": "/indexer/:path*", "destination": "/api/indexer-stub" },
     { "source": "/v2/(.*)", "destination": "/api/v2" },
     { "source": "/((?!api|assets|indexer|chains\\.json|profiles\\.json).*)", "destination": "/index.html" }
   ],

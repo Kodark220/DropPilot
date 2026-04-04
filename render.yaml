@@ -12,13 +12,13 @@ services:
       - key: RPC_ENDPOINT
         sync: false
       - key: CHAIN_ID
-        value: initiadrops-1
+        value: initiation-2
       - key: MODULE_ADDRESS
         sync: false
       - key: AGENT_MNEMONIC
         sync: false
       - key: GAS_DENOM
-        value: umin
+        value: uinit
       - key: POLL_INTERVAL_MS
         value: "5000"
       - key: CORS_ORIGIN
