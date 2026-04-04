@@ -1,6 +1,7 @@
 import React from 'react';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { useToast } from './Toast';
 import { motion } from 'framer-motion';
 import { Store, ShoppingCart, Bot, TrendingDown, ArrowUpRight, Tag, User } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
@@ -119,17 +120,18 @@ function ListingCard({ listing, onBuy, index }) {
 export default function MarketplacePage() {
   const { buyListing } = useDropsContract();
   const { address } = useInterwovenKit();
+  const toast = useToast();
 
   const handleBuy = async (listingId) => {
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     try {
       const result = await buyListing(listingId);
-      alert(`Purchase successful! TX: ${result.transactionHash}`);
+      toast.success(`Purchase successful! TX: ${result.transactionHash?.slice(0, 16)}...`);
     } catch (err) {
-      alert(`Purchase failed: ${err.message}`);
+      toast.error(`Purchase failed: ${err.message}`);
     }
   };
 

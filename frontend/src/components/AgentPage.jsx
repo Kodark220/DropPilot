@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { useToast } from './Toast';
 import { MODULE_ADDRESS } from '../main';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,6 +19,7 @@ import { ScrollArea } from './ui/scroll-area';
 export default function AgentPage() {
   const { address, autoSign } = useInterwovenKit();
   const { authorizeAgent, revokeAgent, fundAgent } = useDropsContract();
+  const toast = useToast();
   const chatEndRef = useRef(null);
 
   const [budget, setBudget] = useState('');
@@ -46,7 +48,7 @@ export default function AgentPage() {
 
   const handleAuthorize = async () => {
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     try {
@@ -62,7 +64,7 @@ export default function AgentPage() {
         active: true,
       });
     } catch (err) {
-      alert(`Failed to authorize agent: ${err.message}`);
+      toast.error(`Failed to authorize agent: ${err.message}`);
     }
   };
 
@@ -72,27 +74,27 @@ export default function AgentPage() {
       if (autoSign?.disable) await autoSign.disable();
       setAgentStatus({ ...agentStatus, active: false });
     } catch (err) {
-      alert(`Failed to revoke agent: ${err.message}`);
+      toast.error(`Failed to revoke agent: ${err.message}`);
     }
   };
 
   const handleFund = async () => {
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     if (!fundAmount || parseFloat(fundAmount) <= 0) {
-      alert('Enter a valid amount');
+      toast.warning('Enter a valid amount');
       return;
     }
     setIsFunding(true);
     try {
       const amountMicro = Math.floor(parseFloat(fundAmount) * 1_000_000);
       const result = await fundAgent(amountMicro);
-      alert(`Funded agent with ${fundAmount} INIT! TX: ${result.transactionHash}`);
+      toast.success(`Funded agent with ${fundAmount} INIT! TX: ${result.transactionHash?.slice(0, 16)}...`);
       setFundAmount('');
     } catch (err) {
-      alert(`Funding failed: ${err.message}`);
+      toast.error(`Funding failed: ${err.message}`);
     } finally {
       setIsFunding(false);
     }

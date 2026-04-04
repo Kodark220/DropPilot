@@ -1,66 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { useToast } from './Toast';
 import { motion } from 'framer-motion';
-import { Clock, ShoppingCart, Bot, TrendingUp, Users, Zap, ArrowRight, Timer } from 'lucide-react';
+import { Clock, ShoppingCart, Bot, TrendingUp, Users, Zap, ArrowRight, Timer, Loader2, PackageOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 
-const MOCK_DROPS = [
-  {
-    id: 1,
-    name: 'Genesis Hoodie Collection',
-    description: 'Limited edition DropPilot genesis hoodie. Only 100 ever made.',
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop',
-    price: 30,
-    totalSupply: 100,
-    sold: 67,
-    maxPerUser: 2,
-    startTime: Date.now() / 1000 - 3600,
-    endTime: Date.now() / 1000 + 7200,
-    creator: 'init1abc...def',
-    active: true,
-    category: 'Apparel',
-  },
-  {
-    id: 2,
-    name: 'Cosmic Cat PFP #1',
-    description: 'Ultra-rare digital collectible from the Cosmic Cat universe.',
-    image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop',
-    price: 15,
-    totalSupply: 500,
-    sold: 500,
-    maxPerUser: 5,
-    startTime: Date.now() / 1000 - 86400,
-    endTime: Date.now() / 1000 - 3600,
-    creator: 'init1xyz...789',
-    active: true,
-    category: 'PFP',
-  },
-  {
-    id: 3,
-    name: 'DevCon 2026 VIP Pass',
-    description: 'Exclusive access to the Initia DevCon 2026 event. Includes all workshops.',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=400&fit=crop',
-    price: 100,
-    totalSupply: 50,
-    sold: 0,
-    maxPerUser: 1,
-    startTime: Date.now() / 1000 + 86400,
-    endTime: Date.now() / 1000 + 172800,
-    creator: 'init1evt...pass',
-    active: true,
-    category: 'Event',
-  },
+const DROP_IMAGES = [
+  'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop',
+  'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=400&fit=crop',
 ];
 
 function getDropStatus(drop) {
   const now = Date.now() / 1000;
-  if (drop.sold >= drop.totalSupply) return 'sold-out';
-  if (now < drop.startTime) return 'upcoming';
-  if (now > drop.endTime) return 'ended';
+  const sold = Number(drop.sold || 0);
+  const totalSupply = Number(drop.total_supply || drop.totalSupply || 1);
+  const startTime = Number(drop.start_time || drop.startTime || 0);
+  const endTime = Number(drop.end_time || drop.endTime || 0);
+  if (sold >= totalSupply) return 'sold-out';
+  if (now < startTime) return 'upcoming';
+  if (now > endTime) return 'ended';
   return 'live';
 }
 
@@ -89,8 +54,15 @@ function DropCard({ drop, onPurchase, index }) {
     return () => clearInterval(interval);
   }, []);
 
-  const progress = (drop.sold / drop.totalSupply) * 100;
-  const timeLeft = status === 'live' ? drop.endTime - now : status === 'upcoming' ? drop.startTime - now : 0;
+  const sold = Number(drop.sold || 0);
+  const totalSupply = Number(drop.total_supply || drop.totalSupply || 1);
+  const maxPerUser = Number(drop.max_per_user || drop.maxPerUser || 1);
+  const priceDisplay = Number(drop.price || 0) / 1_000_000;
+  const startTime = Number(drop.start_time || drop.startTime || 0);
+  const endTime = Number(drop.end_time || drop.endTime || 0);
+  const progress = (sold / totalSupply) * 100;
+  const timeLeft = status === 'live' ? endTime - now : status === 'upcoming' ? startTime - now : 0;
+  const image = DROP_IMAGES[(drop.id - 1) % DROP_IMAGES.length];
 
   return (
     <motion.div
@@ -102,7 +74,7 @@ function DropCard({ drop, onPurchase, index }) {
         {/* Image header */}
         <div className="relative h-48 overflow-hidden">
           <img
-            src={drop.image}
+            src={image}
             alt={drop.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -119,7 +91,7 @@ function DropCard({ drop, onPurchase, index }) {
           {/* Category */}
           <div className="absolute top-3 left-3">
             <Badge variant="default" className="bg-black/50 backdrop-blur-sm border-0 text-[10px]">
-              {drop.category}
+              Drop #{drop.id}
             </Badge>
           </div>
 
@@ -151,15 +123,15 @@ function DropCard({ drop, onPurchase, index }) {
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-2 rounded-lg bg-white/[0.02]">
-              <p className="text-base font-bold text-violet-400">{drop.price}</p>
+              <p className="text-base font-bold text-violet-400">{priceDisplay}</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">INIT</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-white/[0.02]">
-              <p className="text-base font-bold text-white">{drop.sold}<span className="text-slate-500 font-normal">/{drop.totalSupply}</span></p>
+              <p className="text-base font-bold text-white">{sold}<span className="text-slate-500 font-normal">/{totalSupply}</span></p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Minted</p>
             </div>
             <div className="text-center p-2 rounded-lg bg-white/[0.02]">
-              <p className="text-base font-bold text-slate-300">{drop.maxPerUser}</p>
+              <p className="text-base font-bold text-slate-300">{maxPerUser}</p>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Max</p>
             </div>
           </div>
@@ -168,7 +140,7 @@ function DropCard({ drop, onPurchase, index }) {
           <div className="space-y-1.5">
             <div className="flex justify-between text-[10px] text-slate-500">
               <span>{Math.round(progress)}% minted</span>
-              <span>{drop.totalSupply - drop.sold} remaining</span>
+              <span>{totalSupply - sold} remaining</span>
             </div>
             <Progress
               value={progress}
@@ -210,19 +182,41 @@ function DropCard({ drop, onPurchase, index }) {
 }
 
 export default function DropsPage() {
-  const { purchase } = useDropsContract();
+  const { purchase, getAllDrops } = useDropsContract();
   const { address } = useInterwovenKit();
+  const toast = useToast();
+  const [drops, setDrops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const data = await getAllDrops();
+        if (!cancelled) setDrops(data);
+      } catch (e) {
+        console.error('Failed to load drops:', e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   const handlePurchase = async (dropId, quantity) => {
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     try {
       const result = await purchase(dropId, quantity);
-      alert(`Purchase successful! TX: ${result.transactionHash}`);
+      toast.success(`Purchase successful! TX: ${result.transactionHash?.slice(0, 16)}...`);
+      // Refresh drops
+      const data = await getAllDrops();
+      setDrops(data);
     } catch (err) {
-      alert(`Purchase failed: ${err.message}`);
+      toast.error(`Purchase failed: ${err.message}`);
     }
   };
 
@@ -277,11 +271,24 @@ export default function DropsPage() {
       </div>
 
       {/* Drop cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {MOCK_DROPS.map((drop, index) => (
-          <DropCard key={drop.id} drop={drop} onPurchase={handlePurchase} index={index} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+          <Loader2 className="w-8 h-8 animate-spin mb-3 text-violet-400" />
+          <p className="text-sm">Loading drops from chain...</p>
+        </div>
+      ) : drops.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+          <PackageOpen className="w-12 h-12 mb-3 text-slate-600" />
+          <p className="text-base font-medium text-slate-400">No drops yet</p>
+          <p className="text-sm mt-1">Create the first drop to get started!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {drops.map((drop, index) => (
+            <DropCard key={drop.id} drop={drop} onPurchase={handlePurchase} index={index} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

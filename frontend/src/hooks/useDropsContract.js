@@ -110,11 +110,20 @@ export function useDropsContract() {
   }
 
   // Query a view function via the accounts-based endpoint
+  // Args should be base64-encoded BCS values. For convenience, pass raw JS values
+  // and specify their types in argTypes (default: 'u64' for numbers, 'string' otherwise).
   async function queryView(functionName, args = []) {
     const moduleHex = '0x65fa458fcac34f0cc6269ff3ce9f6771a7846db2';
-    const body = {
-      args: args.map((a) => btoa(String(a))),
-    };
+    const encodedArgs = args.map((a) => {
+      if (typeof a === 'number' || (typeof a === 'string' && /^\d+$/.test(a))) {
+        return uint8ArrayToBase64(bcsEncodeU64(Number(a)));
+      }
+      if (typeof a === 'string' && (a.startsWith('init1') || a.startsWith('0x'))) {
+        return uint8ArrayToBase64(bcsEncodeAddress(a));
+      }
+      return uint8ArrayToBase64(bcsEncodeString(String(a)));
+    });
+    const body = { args: encodedArgs };
 
     const res = await fetch(
       `${LCD_ENDPOINT}/initia/move/v1/accounts/${moduleHex}/modules/drops/view_functions/${functionName}`,
@@ -227,6 +236,36 @@ export function useDropsContract() {
     return queryView('get_next_listing_id');
   }
 
+  // Load all drops from chain
+  async function getAllDrops() {
+    const result = await getNextDropId();
+    const nextId = parseInt(JSON.parse(result.data));
+    const drops = [];
+    for (let i = 1; i < nextId; i++) {
+      try {
+        const r = await getDrop(i);
+        const info = JSON.parse(r.data);
+        drops.push({ id: i, ...info });
+      } catch { /* skip deleted/invalid */ }
+    }
+    return drops;
+  }
+
+  // Load all active listings from chain
+  async function getAllListings() {
+    const result = await getNextListingId();
+    const nextId = parseInt(JSON.parse(result.data));
+    const listings = [];
+    for (let i = 1; i < nextId; i++) {
+      try {
+        const r = await getListing(i);
+        const info = JSON.parse(r.data);
+        if (info.active) listings.push({ id: i, ...info });
+      } catch { /* skip */ }
+    }
+    return listings;
+  }
+
   // Helper: resolve denom to metadata object address (hex)
   async function getMetadataAddress(denom) {
     const d = denom || GAS_DENOM;
@@ -252,5 +291,7 @@ export function useDropsContract() {
     getAgentWallet,
     getNextDropId,
     getNextListingId,
+    getAllDrops,
+    getAllListings,
   };
 }

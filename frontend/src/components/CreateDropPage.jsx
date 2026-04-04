@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { useToast } from './Toast';
 import { motion } from 'framer-motion';
 import { Sparkles, Package, Clock, Users, Coins, FileText, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
@@ -11,6 +12,7 @@ import { Separator } from './ui/separator';
 
 export default function CreateDropPage() {
   const { createDrop, address } = useDropsContract();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -29,7 +31,7 @@ export default function CreateDropPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     setLoading(true);
@@ -48,9 +50,9 @@ export default function CreateDropPage() {
         startTime: startTimestamp,
         endTime: endTimestamp,
       });
-      alert(`Drop created! TX: ${result.transactionHash}`);
+      toast.success(`Drop created! TX: ${result.transactionHash?.slice(0, 16)}...`);
     } catch (err) {
-      alert(`Failed to create drop: ${err.message}`);
+      toast.error(`Failed to create drop: ${err.message}`);
     } finally {
       setLoading(false);
     }

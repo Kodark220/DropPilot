@@ -1,4 +1,5 @@
 import React from 'react';
+import { useToast } from './Toast';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
 import { motion } from 'framer-motion';
@@ -28,27 +29,28 @@ export default function MyItemsPage() {
   const [listingPrice, setListingPrice] = React.useState({});
   const { createListing } = useDropsContract();
   const { address } = useInterwovenKit();
+  const toast = useToast();
 
   const handleList = async (dropId) => {
     const price = listingPrice[dropId];
     if (!price) {
-      alert('Enter a resale price first');
+      toast.warning('Enter a resale price first');
       return;
     }
     if (!address) {
-      alert('Connect your wallet first');
+      toast.warning('Connect your wallet first');
       return;
     }
     try {
       const priceMicro = parseInt(price) * 1_000_000;
       const result = await createListing(dropId, 1, priceMicro, 'uinit');
-      alert(`Listed! TX: ${result.transactionHash}`);
+      toast.success(`Listed! TX: ${result.transactionHash?.slice(0, 16)}...`);
     } catch (err) {
       const msg = err.message || '';
       if (msg.includes('0x9000d')) {
-        alert('Listing failed: You don\'t own any items from this drop. Purchase first!');
+        toast.error('Listing failed: You don\'t own any items from this drop. Purchase first!');
       } else {
-        alert(`Listing failed: ${msg}`);
+        toast.error(`Listing failed: ${msg}`);
       }
     }
   };
