@@ -56,7 +56,18 @@ const wagmiConfig = createConfig({
   transports: { [mainnet.id]: http() },
 });
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry 500s from missing modules (lock_staking, usernames)
+        if (error?.message?.includes('500')) return false;
+        return failureCount < 2;
+      },
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
