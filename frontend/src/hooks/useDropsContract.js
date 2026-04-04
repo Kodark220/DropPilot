@@ -141,11 +141,13 @@ export function useDropsContract() {
     return queryView('get_next_listing_id');
   }
 
-  // Helper: resolve denom to metadata address
+  // Helper: resolve denom to metadata object address (hex)
   async function getMetadataAddress(denom) {
-    // For the native gas token, use the standard metadata resolution
-    // This is a simplified version — in production use coin::denom_to_metadata
-    return denom || GAS_DENOM;
+    const d = denom || GAS_DENOM;
+    const res = await fetch(`${LCD_ENDPOINT}/initia/move/v1/metadata?denom=${d}`);
+    if (!res.ok) throw new Error(`Failed to resolve metadata for ${d}`);
+    const data = await res.json();
+    return data.metadata; // e.g. "0x8e4733bd..."
   }
 
   return {
