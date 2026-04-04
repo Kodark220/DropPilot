@@ -1,0 +1,12 @@
+{
+  "project_name": "DropPilot",
+  "repo_url": "https://github.com/YOUR_USERNAME/initia-drops",
+  "commit_sha": "0000000000000000000000000000000000000000",
+  "rollup_chain_id": "initiadrops-1",
+  "deployed_address": "init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf",
+  "vm": "move",
+  "native_feature": "auto-signing",
+  "core_logic_path": "contracts/sources/drops.move",
+  "native_feature_frontend_path": "frontend/src/components/AgentPage.jsx",
+  "demo_video_url": "https://youtu.be/YOUR_DEMO_VIDEO"
+}

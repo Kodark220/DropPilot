@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: droppilot-agent
+    runtime: node
+    rootDir: agent
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: LCD_ENDPOINT
+        sync: false
+      - key: RPC_ENDPOINT
+        sync: false
+      - key: CHAIN_ID
+        value: initiadrops-1
+      - key: MODULE_ADDRESS
+        sync: false
+      - key: AGENT_MNEMONIC
+        sync: false
+      - key: GAS_DENOM
+        value: umin
+      - key: POLL_INTERVAL_MS
+        value: "5000"
+      - key: CORS_ORIGIN
+        sync: false

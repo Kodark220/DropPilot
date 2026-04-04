@@ -1,0 +1,32 @@
+[
+  {
+    "chain_id": "initiadrops-1",
+    "chain_name": "initiadrops",
+    "pretty_name": "DropPilot",
+    "network_type": "testnet",
+    "bech32_prefix": "init",
+    "fees": {
+      "fee_tokens": [
+        {
+          "denom": "umin",
+          "fixed_min_gas_price": 0.15,
+          "low_gas_price": 0.15,
+          "average_gas_price": 0.15,
+          "high_gas_price": 0.4
+        }
+      ]
+    },
+    "apis": {
+      "rpc": [{ "address": "http://192.168.110.117:26657" }],
+      "rest": [{ "address": "http://192.168.110.117:1317" }],
+      "indexer": [{ "address": "http://192.168.110.117:1317" }]
+    },
+    "metadata": {
+      "is_l1": false,
+      "minitia": {
+        "type": "minimove",
+        "version": "v1.1.11"
+      }
+    }
+  }
+]
