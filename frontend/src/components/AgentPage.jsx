@@ -5,7 +5,7 @@ import { useToast } from './Toast';
 import { MODULE_ADDRESS, AGENT_API_URL } from '../main';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bot, Send, Shield, ShieldOff, Wallet, Zap, Eye, Coins,
+  Bot, Send, Shield, ShieldOff, Wallet, Zap, Eye, Coins, X,
   CircleDot, ArrowRight, Sparkles, MessageSquare, ChevronRight, Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -80,6 +80,51 @@ export default function AgentPage() {
     },
   ]);
   const [chatInput, setChatInput] = useState('');
+
+  // Watched drops state
+  const [watchedDropIds, setWatchedDropIds] = useState([]);
+  const [watchedDrops, setWatchedDrops] = useState([]);
+  const [loadingWatched, setLoadingWatched] = useState(false);
+
+  // Fetch watched drops from agent backend
+  useEffect(() => {
+    if (!address) return;
+    setLoadingWatched(true);
+    fetch(`${AGENT_API_URL}/registered?address=${encodeURIComponent(address)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.registered && data.watchDropIds?.length) {
+          setWatchedDropIds(data.watchDropIds);
+        } else {
+          setWatchedDropIds([]);
+        }
+      })
+      .catch(() => setWatchedDropIds([]))
+      .finally(() => setLoadingWatched(false));
+  }, [address]);
+
+  // Fetch drop info for each watched drop ID
+  const { getDrop } = useDropsContract();
+  useEffect(() => {
+    if (!watchedDropIds.length) { setWatchedDrops([]); return; }
+    Promise.all(watchedDropIds.map(async (id) => {
+      try {
+        const r = await getDrop(id);
+        const info = JSON.parse(r.data);
+        return { id, ...info };
+      } catch { return { id, name: `Drop #${id}`, error: true }; }
+    })).then(setWatchedDrops);
+  }, [watchedDropIds]);
+
+  const handleRemoveWatch = async (dropId) => {
+    try {
+      await fetch(`${AGENT_API_URL}/watch?address=${encodeURIComponent(address)}&dropId=${dropId}`, { method: 'DELETE' });
+      setWatchedDropIds(prev => prev.filter(id => id !== dropId));
+      toast.success(`Removed drop #${dropId} from watch list`);
+    } catch (err) {
+      toast.error(`Failed to remove: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -411,18 +456,94 @@ export default function AgentPage() {
         </Card>
       </motion.div>
 
-      {/* Right Column — Chat */}
+      {/* Right Column — Watched Drops + Chat */}
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
-        className="flex flex-col"
+        className="flex flex-col space-y-5"
       >
-        <div className="flex items-center gap-2 mb-4">
-          <MessageSquare className="w-5 h-5 text-violet-400" />
-          <h2 className="text-lg font-bold text-white">Agent Chat</h2>
-          <Badge variant="agent" className="text-[10px]">AI</Badge>
-        </div>
+        {/* Watched Drops */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Eye className="w-4 h-4 text-violet-400" />
+              Watched Drops
+              {watchedDrops.length > 0 && (
+                <Badge variant="agent" className="ml-auto text-[10px]">{watchedDrops.length}</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <Separator />
+          <CardContent className="pt-4">
+            {loadingWatched ? (
+              <div className="flex items-center justify-center py-6 text-slate-500">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span className="text-sm">Loading watched drops...</span>
+              </div>
+            ) : watchedDrops.length === 0 ? (
+              <div className="text-center py-6">
+                <Eye className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">No drops being watched</p>
+                <p className="text-xs text-slate-600 mt-1">Click "Auto Buy with Agent" on an upcoming drop to start</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {watchedDrops.map((drop, i) => {
+                  const priceDisplay = Number(drop.price || 0) / 1_000_000;
+                  const sold = Number(drop.sold || 0);
+                  const total = Number(drop.total_supply || drop.totalSupply || 0);
+                  const now = Date.now() / 1000;
+                  const startTime = Number(drop.start_time || drop.startTime || 0);
+                  const endTime = Number(drop.end_time || drop.endTime || 0);
+                  let statusLabel = 'Watching';
+                  let statusColor = 'text-amber-400';
+                  if (sold >= total) { statusLabel = 'Sold Out'; statusColor = 'text-slate-400'; }
+                  else if (now >= startTime && now <= endTime) { statusLabel = 'Live'; statusColor = 'text-emerald-400'; }
+                  else if (now > endTime) { statusLabel = 'Ended'; statusColor = 'text-red-400'; }
+
+                  return (
+                    <motion.div
+                      key={drop.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium text-white truncate">{drop.name || `Drop #${drop.id}`}</h4>
+                          <Badge variant="default" className="text-[9px] px-1.5 py-0"># {drop.id}</Badge>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <span>{priceDisplay} INIT</span>
+                          <span>{sold}/{total} sold</span>
+                          <span className={statusColor}>{statusLabel}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400"
+                        onClick={() => handleRemoveWatch(drop.id)}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Chat */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5 text-violet-400" />
+            <h2 className="text-lg font-bold text-white">Agent Chat</h2>
+            <Badge variant="agent" className="text-[10px]">AI</Badge>
+          </div>
 
         <Card className="flex-1 flex flex-col min-h-[560px]">
           <ScrollArea className="flex-1 p-4">
@@ -468,6 +589,7 @@ export default function AgentPage() {
             </Button>
           </form>
         </Card>
+        </div>
       </motion.div>
     </div>
   );

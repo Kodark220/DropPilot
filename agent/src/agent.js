@@ -305,6 +305,35 @@ function startAPI() {
         });
       }
 
+      // GET /registered?address=init1... — get a user's watched drops
+      if (req.method === 'GET' && req.url?.startsWith('/registered')) {
+        const url = new URL(req.url, `http://localhost:${PORT}`);
+        const address = url.searchParams.get('address');
+        if (!address) return json(400, { error: 'Missing address param' });
+        const prefs = registeredUsers.get(address);
+        if (!prefs) return json(200, { registered: false, watchDropIds: [], autoBuyEnabled: false });
+        return json(200, {
+          registered: true,
+          watchDropIds: prefs.watchDropIds || [],
+          maxPricePerItem: prefs.maxPricePerItem === Infinity ? null : prefs.maxPricePerItem,
+          autoBuyEnabled: prefs.autoBuyEnabled,
+        });
+      }
+
+      // DELETE /watch?address=init1...&dropId=1 — remove a single drop from watch list
+      if (req.method === 'DELETE' && req.url?.startsWith('/watch')) {
+        const url = new URL(req.url, `http://localhost:${PORT}`);
+        const address = url.searchParams.get('address');
+        const dropId = parseInt(url.searchParams.get('dropId'));
+        if (!address || isNaN(dropId)) return json(400, { error: 'Missing address or dropId' });
+        const prefs = registeredUsers.get(address);
+        if (prefs) {
+          prefs.watchDropIds = (prefs.watchDropIds || []).filter(id => id !== dropId);
+          console.log(`[Agent] ${address.slice(0, 12)}... removed drop #${dropId} from watch list`);
+        }
+        return json(200, { ok: true, watchDropIds: prefs?.watchDropIds || [] });
+      }
+
       json(404, { error: 'Not found' });
     } catch (err) {
       json(400, { error: err.message });
