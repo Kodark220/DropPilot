@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
 import { useToast } from './Toast';
+import { AGENT_API_URL } from '../main';
 import { motion } from 'framer-motion';
 import { Clock, ShoppingCart, Bot, TrendingUp, Users, Zap, ArrowRight, Timer, Loader2, PackageOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -44,7 +45,7 @@ const statusConfig = {
   'sold-out': { badge: 'sold', label: 'SOLD OUT', dot: 'bg-slate-400' },
 };
 
-function DropCard({ drop, onPurchase, index }) {
+function DropCard({ drop, onPurchase, onAutoBuy, index }) {
   const [now, setNow] = useState(Date.now() / 1000);
   const status = getDropStatus(drop);
   const config = statusConfig[status];
@@ -156,7 +157,7 @@ function DropCard({ drop, onPurchase, index }) {
                   <ShoppingCart className="w-3.5 h-3.5" />
                   Buy Now
                 </Button>
-                <Button variant="agent" size="sm" className="gap-1.5" onClick={() => onPurchase(drop.id, 1)}>
+                <Button variant="agent" size="sm" className="gap-1.5" onClick={() => onAutoBuy(drop.id)}>
                   <Bot className="w-3.5 h-3.5" />
                   Auto
                 </Button>
@@ -217,6 +218,29 @@ export default function DropsPage() {
       setDrops(data);
     } catch (err) {
       toast.error(`Purchase failed: ${err.message}`);
+    }
+  };
+
+  const handleAutoBuy = async (dropId) => {
+    if (!address) {
+      toast.warning('Connect your wallet first');
+      return;
+    }
+    try {
+      const res = await fetch(`${AGENT_API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          watchDropIds: [dropId],
+          autoBuyEnabled: true,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      toast.success(`Agent registered for drop #${dropId}! Watching ${data.watching?.length || 1} drop(s). Make sure you've set up and funded your agent on the Agent page.`);
+    } catch (err) {
+      toast.error(`Auto-buy registration failed: ${err.message}`);
     }
   };
 
@@ -285,7 +309,7 @@ export default function DropsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {drops.map((drop, index) => (
-            <DropCard key={drop.id} drop={drop} onPurchase={handlePurchase} index={index} />
+            <DropCard key={drop.id} drop={drop} onPurchase={handlePurchase} onAutoBuy={handleAutoBuy} index={index} />
           ))}
         </div>
       )}

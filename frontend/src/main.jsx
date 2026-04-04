@@ -20,7 +20,7 @@ export const GAS_DENOM = import.meta.env.VITE_GAS_DENOM || 'uinit';
 export const CHAIN_ID = import.meta.env.VITE_CHAIN_ID || 'initiation-2';
 export const LCD_ENDPOINT = import.meta.env.VITE_LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
 export const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'https://rpc.testnet.initia.xyz';
-export const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'http://localhost:3100';
+export const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'https://droppilot.onrender.com';
 // ==============================================================
 
 // Chain definition — deployed on Initia L1 testnet

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
 import { useToast } from './Toast';
-import { MODULE_ADDRESS } from '../main';
+import { MODULE_ADDRESS, AGENT_API_URL } from '../main';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, Shield, ShieldOff, Wallet, Zap, Eye, Coins,
@@ -18,13 +18,15 @@ import { ScrollArea } from './ui/scroll-area';
 
 export default function AgentPage() {
   const { address, autoSign } = useInterwovenKit();
-  const { authorizeAgent, revokeAgent, fundAgent } = useDropsContract();
+  const { authorizeAgent, revokeAgent, fundAgent, getAgentWallet } = useDropsContract();
   const toast = useToast();
   const chatEndRef = useRef(null);
 
   const [budget, setBudget] = useState('');
   const [fundAmount, setFundAmount] = useState('');
   const [isFunding, setIsFunding] = useState(false);
+  const [agentServiceAddress, setAgentServiceAddress] = useState('');
+  const [loadingAgent, setLoadingAgent] = useState(true);
 
   const [agentStatus, setAgentStatus] = useState({
     authorized: false,
@@ -33,6 +35,43 @@ export default function AgentPage() {
     spent: 0,
     active: false,
   });
+
+  // Fetch the agent service's signing address on mount
+  useEffect(() => {
+    async function fetchAgentAddress() {
+      try {
+        const res = await fetch(`${AGENT_API_URL}/agent-address`);
+        if (res.ok) {
+          const data = await res.json();
+          setAgentServiceAddress(data.address);
+        }
+      } catch (e) {
+        console.warn('Could not fetch agent address:', e.message);
+      } finally {
+        setLoadingAgent(false);
+      }
+    }
+    fetchAgentAddress();
+  }, []);
+
+  // Check on-chain agent wallet when address changes
+  useEffect(() => {
+    if (!address) return;
+    getAgentWallet(address).then(result => {
+      try {
+        const wallet = JSON.parse(result.data);
+        if (wallet && wallet.active) {
+          setAgentStatus({
+            authorized: true,
+            agent: wallet.agent,
+            budget: Number(wallet.budget || 0) / 1_000_000,
+            spent: Number(wallet.spent || 0) / 1_000_000,
+            active: true,
+          });
+        }
+      } catch { /* no wallet set */ }
+    }).catch(() => {});
+  }, [address]);
 
   const [chatMessages, setChatMessages] = useState([
     {
@@ -46,23 +85,42 @@ export default function AgentPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  const agentAddr = agentServiceAddress || MODULE_ADDRESS;
+
   const handleAuthorize = async () => {
     if (!address) {
       toast.warning('Connect your wallet first');
       return;
     }
+    if (!agentServiceAddress) {
+      toast.warning('Agent service not reachable. Check your connection.');
+      return;
+    }
     try {
       const budgetMicro = parseInt(budget) * 1_000_000;
-      await authorizeAgent(MODULE_ADDRESS, budgetMicro);
+      // 1. Authorize agent on-chain
+      await authorizeAgent(agentServiceAddress, budgetMicro);
       if (autoSign?.enable) await autoSign.enable();
+
+      // 2. Register with agent backend
+      try {
+        await fetch(`${AGENT_API_URL}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, autoBuyEnabled: true }),
+        });
+      } catch (e) {
+        console.warn('Agent register call failed:', e.message);
+      }
 
       setAgentStatus({
         authorized: true,
-        agent: MODULE_ADDRESS,
+        agent: agentServiceAddress,
         budget: parseInt(budget) || 100,
         spent: 0,
         active: true,
       });
+      toast.success('Agent authorized! Fund the agent wallet to enable auto-buy.');
     } catch (err) {
       toast.error(`Failed to authorize agent: ${err.message}`);
     }
@@ -72,7 +130,16 @@ export default function AgentPage() {
     try {
       await revokeAgent();
       if (autoSign?.disable) await autoSign.disable();
-      setAgentStatus({ ...agentStatus, active: false });
+
+      // Unregister from agent backend
+      try {
+        await fetch(`${AGENT_API_URL}/register?address=${encodeURIComponent(address)}`, { method: 'DELETE' });
+      } catch (e) {
+        console.warn('Agent unregister call failed:', e.message);
+      }
+
+      setAgentStatus({ ...agentStatus, active: false, authorized: false });
+      toast.success('Agent access revoked.');
     } catch (err) {
       toast.error(`Failed to revoke agent: ${err.message}`);
     }
@@ -90,7 +157,7 @@ export default function AgentPage() {
     setIsFunding(true);
     try {
       const amountMicro = Math.floor(parseFloat(fundAmount) * 1_000_000);
-      const result = await fundAgent(amountMicro);
+      const result = await fundAgent(amountMicro, agentAddr);
       toast.success(`Funded agent with ${fundAmount} INIT! TX: ${result.transactionHash?.slice(0, 16)}...`);
       setFundAmount('');
     } catch (err) {
@@ -243,7 +310,11 @@ export default function AgentPage() {
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1.5">Agent Address</label>
                     <div className="flex h-11 w-full items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm">
-                      <span className="text-violet-400 font-mono truncate">{MODULE_ADDRESS}</span>
+                      {loadingAgent ? (
+                        <span className="text-slate-500">Loading agent address...</span>
+                      ) : (
+                        <span className="text-violet-400 font-mono truncate">{agentAddr}</span>
+                      )}
                     </div>
                   </div>
 
@@ -310,7 +381,7 @@ export default function AgentPage() {
             </p>
             <div className="flex h-9 w-full items-center rounded-lg border border-white/10 bg-white/[0.03] px-3 text-xs">
               <span className="text-slate-500 mr-1.5">To:</span>
-              <span className="text-violet-400 font-mono truncate">{MODULE_ADDRESS}</span>
+              <span className="text-violet-400 font-mono truncate">{agentAddr}</span>
             </div>
             <div className="flex gap-2">
               <Input

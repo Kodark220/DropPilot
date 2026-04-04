@@ -176,13 +176,13 @@ export function useDropsContract() {
     return requestTxBlock({ messages: [msg] });
   }
 
-  // Send tokens from connected wallet to the agent address
-  async function fundAgent(amount) {
+  // Send tokens from connected wallet to a target address (e.g. agent wallet)
+  async function fundAgent(amount, targetAddress) {
     const msg = {
       typeUrl: '/cosmos.bank.v1beta1.MsgSend',
       value: {
         fromAddress: address,
-        toAddress: MODULE_ADDRESS,
+        toAddress: targetAddress || MODULE_ADDRESS,
         amount: [{ denom: GAS_DENOM, amount: String(amount) }],
       },
     };
