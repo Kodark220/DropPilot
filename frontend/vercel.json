@@ -3,8 +3,9 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/indexer/(.*)", "destination": "https://rest.testnet.initia.xyz/indexer/$1" },
     { "source": "/v2/(.*)", "destination": "/api/v2" },
-    { "source": "/((?!api|assets|chains\\.json|profiles\\.json).*)", "destination": "/index.html" }
+    { "source": "/((?!api|assets|indexer|chains\\.json|profiles\\.json).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
