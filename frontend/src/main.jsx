@@ -107,8 +107,6 @@ function Providers({ children }) {
             registryUrl={window.location.origin}
             routerApiUrl=""
             glyphUrl=""
-            usernamesModuleAddress=""
-            lockStakeModuleAddress=""
             minityUrl=""
             dexUrl=""
             vipUrl=""
