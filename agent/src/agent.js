@@ -1,7 +1,6 @@
-import 'dotenv/config';
-import { createServer } from 'http';
-import pkg from '@initia/initia.js';
-const { LCDClient, MnemonicKey, MsgExecute, Wallet, bcs } = pkg;
+require('dotenv/config');
+const { createServer } = require('http');
+const { LCDClient, MnemonicKey, MsgExecute, Wallet, bcs } = require('@initia/initia.js');
 
 /**
  * DropPilot Agent — watches for live drops and auto-purchases within budget.
