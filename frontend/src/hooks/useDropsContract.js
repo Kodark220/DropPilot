@@ -1,6 +1,91 @@
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { MODULE_ADDRESS, GAS_DENOM, LCD_ENDPOINT } from '../main';
 
+// ==================== BCS Encoding Helpers ====================
+// MsgExecute requires BCS-encoded byte arrays for each argument.
+
+function bcsEncodeU64(value) {
+  const buf = new ArrayBuffer(8);
+  const view = new DataView(buf);
+  // Little-endian u64
+  view.setUint32(0, Number(BigInt(value) & 0xFFFFFFFFn), true);
+  view.setUint32(4, Number((BigInt(value) >> 32n) & 0xFFFFFFFFn), true);
+  return new Uint8Array(buf);
+}
+
+function bcsEncodeString(str) {
+  const encoded = new TextEncoder().encode(str);
+  const lenBytes = bcsEncodeULEB128(encoded.length);
+  const result = new Uint8Array(lenBytes.length + encoded.length);
+  result.set(lenBytes);
+  result.set(encoded, lenBytes.length);
+  return result;
+}
+
+function bcsEncodeULEB128(value) {
+  const bytes = [];
+  do {
+    let byte = value & 0x7F;
+    value >>= 7;
+    if (value !== 0) byte |= 0x80;
+    bytes.push(byte);
+  } while (value !== 0);
+  return new Uint8Array(bytes);
+}
+
+function bcsEncodeAddress(addrStr) {
+  // Handle hex addresses (0x-prefixed, 20 or 32 bytes)
+  if (addrStr.startsWith('0x') || addrStr.startsWith('0X')) {
+    const hex = addrStr.slice(2);
+    const raw = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < raw.length; i++) {
+      raw[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    // Pad to 32 bytes if shorter
+    if (raw.length < 32) {
+      const padded = new Uint8Array(32);
+      padded.set(raw, 32 - raw.length);
+      return padded;
+    }
+    return raw;
+  }
+  // Handle bech32 addresses (init1...)
+  if (addrStr.startsWith('init1')) {
+    const CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+    const dataPart = addrStr.slice(5); // after "init1"
+    const values = [];
+    for (const c of dataPart) values.push(CHARSET.indexOf(c));
+    // Remove checksum (last 6 values)
+    const data5 = values.slice(0, -6);
+    // Convert 5-bit to 8-bit
+    let acc = 0, bits = 0;
+    const raw = [];
+    for (const v of data5) {
+      acc = (acc << 5) | v;
+      bits += 5;
+      while (bits >= 8) {
+        bits -= 8;
+        raw.push((acc >> bits) & 0xFF);
+      }
+    }
+    // Pad to 32 bytes (Move address is 32 bytes)
+    const padded = new Uint8Array(32);
+    padded.set(raw, 32 - raw.length);
+    return padded;
+  }
+  throw new Error(`Unsupported address format: ${addrStr}`);
+}
+
+function uint8ArrayToBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+// ==================== Hook ====================
+
 /**
  * Hook that provides helpers for interacting with the DropPilot Move module.
  * Uses InterwovenKit's requestTxBlock for signing + broadcasting.
@@ -8,36 +93,37 @@ import { MODULE_ADDRESS, GAS_DENOM, LCD_ENDPOINT } from '../main';
 export function useDropsContract() {
   const { address, requestTxBlock } = useInterwovenKit();
 
-  // Build a MsgExecuteJSON for calling a Move entry function
-  function buildMoveExecuteMsg(functionName, typeArgs = [], args = []) {
+  // Build a MsgExecute with BCS-encoded args
+  function buildMoveExecuteMsg(functionName, typeArgs = [], bcsArgs = []) {
+    if (!address) throw new Error('Wallet not connected');
     return {
-      typeUrl: '/initia.move.v1.MsgExecuteJSON',
+      typeUrl: '/initia.move.v1.MsgExecute',
       value: {
         sender: address,
         module_address: MODULE_ADDRESS,
         module_name: 'drops',
         function_name: functionName,
         type_args: typeArgs,
-        args: args.map((a) => JSON.stringify(String(a))),
+        args: bcsArgs.map((a) => uint8ArrayToBase64(a)),
       },
     };
   }
 
-  // Query a view function on the module
+  // Query a view function via the accounts-based endpoint
   async function queryView(functionName, args = []) {
+    const moduleHex = '0x65fa458fcac34f0cc6269ff3ce9f6771a7846db2';
     const body = {
-      module_address: MODULE_ADDRESS,
-      module_name: 'drops',
-      function_name: functionName,
-      type_args: [],
       args: args.map((a) => btoa(String(a))),
     };
 
-    const res = await fetch(`${LCD_ENDPOINT}/initia/move/v1/view`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const res = await fetch(
+      `${LCD_ENDPOINT}/initia/move/v1/accounts/${moduleHex}/modules/drops/view_functions/${functionName}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!res.ok) throw new Error(`View query failed: ${await res.text()}`);
     return res.json();
@@ -48,30 +134,30 @@ export function useDropsContract() {
   async function createDrop({ name, description, price, paymentDenom, totalSupply, maxPerUser, startTime, endTime }) {
     const metadataAddr = await getMetadataAddress(paymentDenom);
     const msg = buildMoveExecuteMsg('create_drop', [], [
-      name,
-      description,
-      String(price),
-      metadataAddr,
-      String(totalSupply),
-      String(maxPerUser),
-      String(startTime),
-      String(endTime),
+      bcsEncodeString(name),
+      bcsEncodeString(description),
+      bcsEncodeU64(price),
+      bcsEncodeAddress(metadataAddr),
+      bcsEncodeU64(totalSupply),
+      bcsEncodeU64(maxPerUser),
+      bcsEncodeU64(startTime),
+      bcsEncodeU64(endTime),
     ]);
     return requestTxBlock({ messages: [msg] });
   }
 
   async function purchase(dropId, quantity) {
     const msg = buildMoveExecuteMsg('purchase', [], [
-      String(dropId),
-      String(quantity),
+      bcsEncodeU64(dropId),
+      bcsEncodeU64(quantity),
     ]);
     return requestTxBlock({ messages: [msg] });
   }
 
   async function authorizeAgent(agentAddress, budget) {
     const msg = buildMoveExecuteMsg('authorize_agent', [], [
-      agentAddress,
-      String(budget),
+      bcsEncodeAddress(agentAddress),
+      bcsEncodeU64(budget),
     ]);
     return requestTxBlock({ messages: [msg] });
   }
@@ -97,21 +183,21 @@ export function useDropsContract() {
   async function createListing(dropId, quantity, pricePerUnit, paymentDenom) {
     const metadataAddr = await getMetadataAddress(paymentDenom);
     const msg = buildMoveExecuteMsg('create_listing', [], [
-      String(dropId),
-      String(quantity),
-      String(pricePerUnit),
-      metadataAddr,
+      bcsEncodeU64(dropId),
+      bcsEncodeU64(quantity),
+      bcsEncodeU64(pricePerUnit),
+      bcsEncodeAddress(metadataAddr),
     ]);
     return requestTxBlock({ messages: [msg] });
   }
 
   async function buyListing(listingId) {
-    const msg = buildMoveExecuteMsg('buy_listing', [], [String(listingId)]);
+    const msg = buildMoveExecuteMsg('buy_listing', [], [bcsEncodeU64(listingId)]);
     return requestTxBlock({ messages: [msg] });
   }
 
   async function cancelListing(listingId) {
-    const msg = buildMoveExecuteMsg('cancel_listing', [], [String(listingId)]);
+    const msg = buildMoveExecuteMsg('cancel_listing', [], [bcsEncodeU64(listingId)]);
     return requestTxBlock({ messages: [msg] });
   }
 
