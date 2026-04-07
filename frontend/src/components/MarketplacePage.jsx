@@ -25,8 +25,8 @@ function ListingCard({ listing, onBuy, index }) {
     >
       <Card className="group card-hover overflow-hidden">
         {/* Header */}
-        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-emerald-600/20 via-cyan-600/10 to-transparent flex items-center justify-center">
-          <Package className="w-12 h-12 text-emerald-400/40" />
+        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-violet-600/20 via-fuchsia-600/10 to-transparent flex items-center justify-center">
+          <Package className="w-12 h-12 text-violet-400/40" />
           <div className="absolute top-3 right-3">
             <Badge variant="live" className="gap-1">
               <Tag className="w-3 h-3" />
@@ -139,7 +139,7 @@ export default function MarketplacePage() {
         transition={{ duration: 0.4 }}
       >
         <div className="flex items-center gap-3 mb-1">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-600 shadow-lg shadow-emerald-500/20">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-lg shadow-violet-500/20">
             <Store className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -157,12 +157,12 @@ export default function MarketplacePage() {
         className="flex gap-6 text-xs text-slate-500"
       >
         <div className="flex items-center gap-1.5">
-          <Store className="w-3.5 h-3.5 text-emerald-400" />
+          <Store className="w-3.5 h-3.5 text-violet-400" />
           <span>{listings.length} active listing{listings.length !== 1 ? 's' : ''}</span>
         </div>
         {floorPrice > 0 && (
           <div className="flex items-center gap-1.5">
-            <TrendingDown className="w-3.5 h-3.5 text-cyan-400" />
+            <TrendingDown className="w-3.5 h-3.5 text-violet-400" />
             <span>Floor: {floorPrice} INIT</span>
           </div>
         )}
@@ -171,7 +171,7 @@ export default function MarketplacePage() {
       {/* Listings grid */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
           <span className="ml-3 text-slate-500">Loading listings from chain...</span>
         </div>
       ) : listings.length === 0 ? (

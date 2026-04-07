@@ -283,11 +283,11 @@ export default function DropsPage() {
               <span>67 active buyers</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+              <TrendingUp className="w-3.5 h-3.5 text-violet-400" />
               <span>3 live drops</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Bot className="w-3.5 h-3.5 text-amber-400" />
+              <Bot className="w-3.5 h-3.5 text-violet-400" />
               <span>12 agents active</span>
             </div>
           </div>

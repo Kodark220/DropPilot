@@ -32,21 +32,21 @@
 @layer components {
   /* Gradient text */
   .gradient-text {
-    background: linear-gradient(135deg, #F0B994 0%, #E8956D 40%, #D07A54 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .gradient-text-warm {
-    background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #ef4444 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
   .gradient-text-cool {
-    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #E8956D 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -61,7 +61,7 @@
 
   /* Glow effects */
   .glow-violet {
-    box-shadow: 0 0 20px rgba(232, 149, 109, 0.15), 0 0 60px rgba(232, 149, 109, 0.05);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.15), 0 0 60px rgba(124, 58, 237, 0.05);
   }
 
   .glow-emerald {
@@ -69,7 +69,7 @@
   }
 
   .glow-amber {
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245, 158, 11, 0.05);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), 0 0 60px rgba(168, 85, 247, 0.05);
   }
 
   /* Animated gradient border */
@@ -83,7 +83,7 @@
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(232, 149, 109, 0.3), rgba(192, 144, 104, 0.1), rgba(232, 149, 109, 0.3));
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(168, 85, 247, 0.1), rgba(217, 70, 239, 0.3));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -100,8 +100,8 @@
   /* Card hover lift */
   .card-hover:hover {
     transform: translateY(-2px);
-    border-color: rgba(232, 149, 109, 0.2);
-    box-shadow: 0 8px 32px rgba(232, 149, 109, 0.08);
+    border-color: rgba(124, 58, 237, 0.2);
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.08);
   }
 
   /* Dot indicator */
@@ -144,7 +144,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #E8956D;
+    background: #a855f7;
     animation: float 1.4s ease-in-out infinite;
   }
   .typing-dot:nth-child(2) { animation-delay: 0.2s; }
