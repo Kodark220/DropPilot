@@ -156,7 +156,12 @@ async function getUserOwned(user, dropId) {
 async function getAgentWalletOnChain(owner) {
   try {
     const result = await queryView('get_agent_wallet', [owner]);
-    return JSON.parse(result.data);
+    const raw = JSON.parse(result.data);
+    // On-chain returns [agent_hex, budget_str, spent_str, active_bool]
+    if (Array.isArray(raw)) {
+      return { agent: raw[0], budget: raw[1], spent: raw[2], active: raw[3] };
+    }
+    return raw;
   } catch {
     return null;
   }

@@ -57,20 +57,44 @@ export default function AgentPage() {
   // Check on-chain agent wallet when address changes
   useEffect(() => {
     if (!address) return;
-    getAgentWallet(address).then(result => {
+    let cancelled = false;
+
+    async function checkOnChainAuth() {
       try {
-        const wallet = JSON.parse(result.data);
-        if (wallet && wallet.active) {
+        const result = await getAgentWallet(address);
+        if (cancelled) return;
+        const raw = JSON.parse(result.data);
+        // On-chain returns [agent_hex, budget_str, spent_str, active_bool]
+        let agent, budgetVal, spentVal, active;
+        if (Array.isArray(raw)) {
+          [agent, budgetVal, spentVal, active] = raw;
+        } else {
+          agent = raw.agent;
+          budgetVal = raw.budget;
+          spentVal = raw.spent;
+          active = raw.active;
+        }
+        if (active) {
           setAgentStatus({
             authorized: true,
-            agent: wallet.agent,
-            budget: Number(wallet.budget || 0) / 1_000_000,
-            spent: Number(wallet.spent || 0) / 1_000_000,
+            agent: agent || '',
+            budget: Number(budgetVal || 0) / 1_000_000,
+            spent: Number(spentVal || 0) / 1_000_000,
             active: true,
           });
+        } else {
+          setAgentStatus(prev => ({ ...prev, authorized: false, active: false }));
         }
-      } catch { /* no wallet set */ }
-    }).catch(() => {});
+      } catch {
+        // No agent wallet on-chain — user hasn't authorized yet
+        if (!cancelled) {
+          setAgentStatus(prev => ({ ...prev, authorized: false, active: false }));
+        }
+      }
+    }
+
+    checkOnChainAuth();
+    return () => { cancelled = true; };
   }, [address]);
 
   const [chatMessages, setChatMessages] = useState([

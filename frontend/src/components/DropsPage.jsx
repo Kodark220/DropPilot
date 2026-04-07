@@ -222,14 +222,18 @@ export default function DropsPage() {
     }
     try {
       // Check if user has authorized the agent on-chain
-      let agentWallet;
+      let isAuthorized = false;
       try {
-        agentWallet = await getAgentWallet(address);
+        const result = await getAgentWallet(address);
+        const raw = JSON.parse(result.data);
+        // On-chain returns [agent_hex, budget, spent, active] or an object
+        const active = Array.isArray(raw) ? raw[3] : raw.active;
+        isAuthorized = !!active;
       } catch {
         // get_agent_wallet throws if no AgentWallet resource exists
-        agentWallet = null;
+        isAuthorized = false;
       }
-      if (!agentWallet || !agentWallet.active) {
+      if (!isAuthorized) {
         toast.warning('You need to authorize and fund the agent first! Go to the Agent page to set it up.');
         return;
       }
