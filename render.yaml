@@ -25,3 +25,9 @@ services:
         value: "5000"
       - key: CORS_ORIGIN
         sync: false
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: agent-data
+      mountPath: /data
+      sizeGB: 1

@@ -1,5 +1,7 @@
 require('dotenv/config');
 const { createServer } = require('http');
+const fs = require('fs');
+const path = require('path');
 const { LCDClient, MnemonicKey, MsgExecute, Wallet, bcs } = require('@initia/initia.js');
 
 /**
@@ -68,6 +70,44 @@ const MODULE_HEX = bech32ToHex(MODULE);
 const registeredUsers = new Map();
 // Track which (user, dropId) combos we've already purchased to avoid duplicates
 const purchasedSet = new Set();
+
+// ==================== Persistent Storage ====================
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
+const USERS_FILE = path.join(DATA_DIR, 'registered_users.json');
+
+function saveRegistrations() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    const data = {};
+    for (const [addr, prefs] of registeredUsers) {
+      data[addr] = {
+        ...prefs,
+        maxPricePerItem: prefs.maxPricePerItem === Infinity ? null : prefs.maxPricePerItem,
+      };
+    }
+    fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('[Agent] Failed to save registrations:', err.message);
+  }
+}
+
+function loadRegistrations() {
+  try {
+    if (!fs.existsSync(USERS_FILE)) return;
+    const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    for (const [addr, prefs] of Object.entries(data)) {
+      registeredUsers.set(addr, {
+        ...prefs,
+        maxPricePerItem: prefs.maxPricePerItem ?? Infinity,
+      });
+    }
+    console.log(`[Agent] Loaded ${registeredUsers.size} registered user(s) from disk`);
+  } catch (err) {
+    console.error('[Agent] Failed to load registrations:', err.message);
+  }
+}
+
+loadRegistrations();
 
 // ==================== View Queries (BCS-encoded) ====================
 async function queryView(functionName, args = []) {
@@ -223,6 +263,212 @@ async function scanSecondaryMarket() {
   if (registeredUsers.size === 0) return;
 }
 
+// ==================== Chat Handler ====================
+async function handleChatMessage(message, userAddr) {
+  const lower = message.toLowerCase().trim();
+
+  try {
+    // --- Status / Budget ---
+    if (lower.match(/\b(status|budget|balance|wallet|how much|remaining)\b/)) {
+      return await chatStatus(userAddr);
+    }
+
+    // --- List drops ---
+    if (lower.match(/\b(drops|list|show|available|what.*(live|active|buy))\b/)) {
+      return await chatListDrops();
+    }
+
+    // --- Watch / auto-buy a drop ---
+    const watchMatch = lower.match(/\b(?:watch|auto.?buy|track|alert|notify)\b.*?#?(\d+)/);
+    if (watchMatch) {
+      return await chatWatch(userAddr, parseInt(watchMatch[1]));
+    }
+    // also handle "watch drop 2" without #
+    const watchMatch2 = lower.match(/\b(?:watch|auto.?buy|track)\s+(?:drop\s+)?(\d+)/);
+    if (watchMatch2) {
+      return await chatWatch(userAddr, parseInt(watchMatch2[1]));
+    }
+
+    // --- Stop watching ---
+    const unwatchMatch = lower.match(/\b(?:unwatch|stop|remove|cancel)\b.*?#?(\d+)/);
+    if (unwatchMatch) {
+      return await chatUnwatch(userAddr, parseInt(unwatchMatch[1]));
+    }
+
+    // --- Buy now (agent purchase) ---
+    const buyMatch = lower.match(/\bbuy\b.*?#?(\d+)/);
+    if (buyMatch) {
+      return await chatBuy(userAddr, parseInt(buyMatch[1]));
+    }
+
+    // --- My watched drops ---
+    if (lower.match(/\b(watching|my\s+drops|my\s+watch|tracked)\b/)) {
+      return chatMyWatched(userAddr);
+    }
+
+    // --- Help ---
+    if (lower.match(/\b(help|commands|what can you|menu)\b/)) {
+      return chatHelp();
+    }
+
+    // --- Agent info ---
+    if (lower.match(/\b(who are you|about|info|agent)\b/) && !lower.includes('buy')) {
+      return `I'm the DropPilot agent (${AGENT_ADDRESS.slice(0, 12)}...). I auto-purchase drops on your behalf when they go live. I poll the chain every ${POLL_INTERVAL / 1000}s looking for live drops you're watching.`;
+    }
+
+    // --- Fallback ---
+    return chatHelp();
+  } catch (err) {
+    console.error('[Chat] Error:', err.message);
+    return `Something went wrong: ${err.message}`;
+  }
+}
+
+async function chatStatus(userAddr) {
+  // Agent wallet balance
+  let agentBalance = '?';
+  try {
+    const balRes = await fetch(`${LCD_URL}/cosmos/bank/v1beta1/balances/${AGENT_ADDRESS}`);
+    const balData = await balRes.json();
+    const uinit = balData.balances?.find(b => b.denom === GAS_DENOM);
+    agentBalance = uinit ? (Number(uinit.amount) / 1_000_000).toFixed(2) : '0';
+  } catch {}
+
+  let userInfo = '';
+  if (userAddr) {
+    const prefs = registeredUsers.get(userAddr);
+    const onChain = await getAgentWalletOnChain(userAddr);
+
+    if (onChain && onChain.active) {
+      const budget = (Number(onChain.budget || 0) / 1_000_000).toFixed(2);
+      const spent = (Number(onChain.spent || 0) / 1_000_000).toFixed(2);
+      const remaining = (Number(onChain.budget || 0) - Number(onChain.spent || 0)) / 1_000_000;
+      userInfo = `\n\nYour on-chain authorization:\n• Budget: ${budget} INIT\n• Spent: ${spent} INIT\n• Remaining: ${remaining.toFixed(2)} INIT\n• Status: Active ✓`;
+    } else {
+      userInfo = '\n\n⚠ You have NOT authorized me on-chain yet. Go to the Agent page and click "Authorize Agent" first.';
+    }
+
+    if (prefs) {
+      const watching = prefs.watchDropIds?.length || 0;
+      userInfo += `\n• Watching: ${watching} drop(s)`;
+    } else {
+      userInfo += '\n• Not registered with agent backend';
+    }
+  }
+
+  return `Agent Wallet: ${agentBalance} INIT\nAgent Address: ${AGENT_ADDRESS.slice(0, 16)}...\nRegistered Users: ${registeredUsers.size}\nPolling: every ${POLL_INTERVAL / 1000}s${userInfo}`;
+}
+
+async function chatListDrops() {
+  const nextId = await getNextDropId();
+  if (nextId <= 1) return 'No drops found on-chain yet.';
+
+  const now = Math.floor(Date.now() / 1000);
+  const lines = [];
+
+  for (let id = 1; id < nextId; id++) {
+    const drop = await getDrop(id);
+    if (!drop) continue;
+
+    const start = Number(drop.start_time || drop.startTime || 0);
+    const end = Number(drop.end_time || drop.endTime || 0);
+    const sold = Number(drop.sold || 0);
+    const total = Number(drop.total_supply || drop.totalSupply || 0);
+    const price = (Number(drop.price || 0) / 1_000_000).toFixed(2);
+
+    let status;
+    if (!drop.active) status = '❌ Cancelled';
+    else if (sold >= total) status = '🔴 Sold Out';
+    else if (now < start) status = '🟡 Upcoming';
+    else if (now > end) status = '⏰ Ended';
+    else status = '🟢 LIVE';
+
+    lines.push(`#${id} "${drop.name}" — ${price} INIT — ${sold}/${total} sold — ${status}`);
+  }
+
+  return lines.length ? `Drops on-chain:\n${lines.join('\n')}` : 'No drops found.';
+}
+
+async function chatWatch(userAddr, dropId) {
+  if (!userAddr) return 'Connect your wallet first so I know your address.';
+
+  const drop = await getDrop(dropId);
+  if (!drop) return `Drop #${dropId} not found on-chain.`;
+
+  // Check on-chain auth
+  const onChain = await getAgentWalletOnChain(userAddr);
+  if (!onChain || !onChain.active) {
+    return `⚠ You need to authorize me on-chain first! Go to the Agent page → "Authorize Agent". Then come back and tell me to watch drop #${dropId}.`;
+  }
+
+  const existing = registeredUsers.get(userAddr) || { watchDropIds: [], autoBuyEnabled: true };
+  const mergedDropIds = [...new Set([...(existing.watchDropIds || []), dropId])];
+  registeredUsers.set(userAddr, { ...existing, watchDropIds: mergedDropIds, autoBuyEnabled: true });
+  saveRegistrations();
+
+  const price = (Number(drop.price || 0) / 1_000_000).toFixed(2);
+  return `Now watching drop #${dropId} "${drop.name}" (${price} INIT). I'll auto-buy it for you when it goes live. You're watching ${mergedDropIds.length} drop(s) total.`;
+}
+
+async function chatUnwatch(userAddr, dropId) {
+  if (!userAddr) return 'Connect your wallet first.';
+  const prefs = registeredUsers.get(userAddr);
+  if (!prefs) return "You're not registered. Nothing to unwatch.";
+
+  prefs.watchDropIds = (prefs.watchDropIds || []).filter(id => id !== dropId);
+  saveRegistrations();
+  return `Removed drop #${dropId} from your watch list. Still watching ${prefs.watchDropIds.length} drop(s).`;
+}
+
+async function chatBuy(userAddr, dropId) {
+  if (!userAddr) return 'Connect your wallet first.';
+
+  const drop = await getDrop(dropId);
+  if (!drop) return `Drop #${dropId} not found.`;
+
+  const now = Math.floor(Date.now() / 1000);
+  const start = Number(drop.start_time || drop.startTime || 0);
+  const end = Number(drop.end_time || drop.endTime || 0);
+  const sold = Number(drop.sold || 0);
+  const total = Number(drop.total_supply || drop.totalSupply || 0);
+
+  if (!drop.active) return `Drop #${dropId} is cancelled.`;
+  if (sold >= total) return `Drop #${dropId} is sold out.`;
+  if (now < start) return `Drop #${dropId} hasn't started yet. It starts at ${new Date(start * 1000).toLocaleString()}. I'll add it to your watch list instead.`;
+  if (now > end) return `Drop #${dropId} has ended.`;
+
+  // Check auth
+  const onChain = await getAgentWalletOnChain(userAddr);
+  if (!onChain || !onChain.active) {
+    return '⚠ You need to authorize me on-chain first! Go to the Agent page → "Authorize Agent".';
+  }
+
+  // Check budget
+  const spent = Number(onChain.spent || 0);
+  const budget = Number(onChain.budget || 0);
+  const price = Number(drop.price || 0);
+  if (spent + price > budget) {
+    return `Insufficient budget. You've spent ${(spent / 1e6).toFixed(2)} of ${(budget / 1e6).toFixed(2)} INIT. This drop costs ${(price / 1e6).toFixed(2)} INIT.`;
+  }
+
+  // Execute purchase
+  const result = await executeAgentPurchase(userAddr, dropId, 1);
+  purchasedSet.add(`${userAddr}:${dropId}`);
+  return `Purchased drop #${dropId} "${drop.name}" for you! TX: ${result.txhash}`;
+}
+
+function chatMyWatched(userAddr) {
+  if (!userAddr) return 'Connect your wallet first.';
+  const prefs = registeredUsers.get(userAddr);
+  if (!prefs || !prefs.watchDropIds?.length) return "You're not watching any drops right now.";
+  const ids = prefs.watchDropIds.map(id => `#${id}`).join(', ');
+  return `You're watching drops: ${ids}\nAuto-buy is ${prefs.autoBuyEnabled ? 'enabled ✓' : 'disabled ✗'}`;
+}
+
+function chatHelp() {
+  return `Here's what I can do:\n\n• "status" — check agent wallet balance & your authorization\n• "drops" — list all drops on-chain with status\n• "watch #3" — auto-buy drop #3 when it goes live\n• "unwatch #3" — stop watching drop #3\n• "buy #3" — purchase drop #3 right now\n• "watching" — see your watched drops\n• "help" — show this menu`;
+}
+
 // --- HTTP API for frontend to register/unregister users ---
 function parseBody(req) {
   return new Promise((resolve, reject) => {
@@ -278,6 +524,7 @@ function startAPI() {
           maxPricePerItem: maxPricePerItem || existing.maxPricePerItem || Infinity,
           autoBuyEnabled: autoBuyEnabled !== false,
         });
+        saveRegistrations();
         console.log(`[Agent] Registered user: ${address} watching drops: [${mergedDropIds}] (total: ${registeredUsers.size})`);
         return json(200, { ok: true, users: registeredUsers.size, watching: mergedDropIds });
       }
@@ -288,6 +535,7 @@ function startAPI() {
         const address = url.searchParams.get('address');
         if (address && registeredUsers.has(address)) {
           registeredUsers.delete(address);
+          saveRegistrations();
           console.log(`[Agent] Unregistered user: ${address} (total: ${registeredUsers.size})`);
         }
         return json(200, { ok: true, users: registeredUsers.size });
@@ -329,9 +577,18 @@ function startAPI() {
         const prefs = registeredUsers.get(address);
         if (prefs) {
           prefs.watchDropIds = (prefs.watchDropIds || []).filter(id => id !== dropId);
+          saveRegistrations();
           console.log(`[Agent] ${address.slice(0, 12)}... removed drop #${dropId} from watch list`);
         }
         return json(200, { ok: true, watchDropIds: prefs?.watchDropIds || [] });
+      }
+
+      // POST /chat — interactive agent chat
+      if (req.method === 'POST' && req.url === '/chat') {
+        const { message, address: userAddr } = await parseBody(req);
+        if (!message) return json(400, { error: 'Missing message' });
+        const reply = await handleChatMessage(message, userAddr);
+        return json(200, { reply });
       }
 
       json(404, { error: 'Not found' });

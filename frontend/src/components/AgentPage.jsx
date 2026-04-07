@@ -212,40 +212,30 @@ export default function AgentPage() {
     }
   };
 
-  const handleChat = (e) => {
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleChat = async (e) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || chatLoading) return;
 
     const userMsg = chatInput.trim();
     setChatMessages((prev) => [...prev, { role: 'user', text: userMsg }]);
     setChatInput('');
+    setChatLoading(true);
 
-    setTimeout(() => {
-      let response = '';
-      const lower = userMsg.toLowerCase();
-
-      if (lower.includes('buy') && lower.includes('hoodie')) {
-        response =
-          'Found "Genesis Hoodie Collection" — 30 INIT each, 33 left. I\'ll auto-buy 1 for you when the next slot opens. Budget remaining: ' +
-          (agentStatus.budget - agentStatus.spent - 30) +
-          ' INIT.';
-      } else if (lower.includes('watch') || lower.includes('alert')) {
-        response =
-          "Got it! I'm now watching for new drops matching your preferences. I'll auto-purchase within your budget the moment they go live.";
-      } else if (lower.includes('snipe') || lower.includes('secondary')) {
-        response =
-          'Scanning secondary market... Found 3 listings under your max price. The best deal is Genesis Hoodie at 40 INIT (resale). Want me to buy it?';
-      } else if (lower.includes('budget') || lower.includes('status')) {
-        response = `Agent Status:\n• Budget: ${agentStatus.budget} INIT\n• Spent: ${agentStatus.spent} INIT\n• Remaining: ${agentStatus.budget - agentStatus.spent} INIT\n• Active: ${agentStatus.active ? 'Yes' : 'No'}`;
-      } else if (lower.includes('yes') || lower.includes('go') || lower.includes('do it')) {
-        response = 'Executing purchase via auto-sign... Done! Transaction confirmed. Receipt added to your inventory.';
-      } else {
-        response =
-          'I can help you with:\n• "Buy [item name]" — purchase from active drops\n• "Watch for [criteria]" — set alerts\n• "Snipe secondary under [price]" — auto-buy resale deals\n• "Show budget status" — check your agent wallet';
-      }
-
-      setChatMessages((prev) => [...prev, { role: 'agent', text: response }]);
-    }, 800);
+    try {
+      const res = await fetch(`${AGENT_API_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg, address }),
+      });
+      const data = await res.json();
+      setChatMessages((prev) => [...prev, { role: 'agent', text: data.reply || data.error || 'No response' }]);
+    } catch (err) {
+      setChatMessages((prev) => [...prev, { role: 'agent', text: `Connection error: ${err.message}. Is the agent service running?` }]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   const remaining = agentStatus.budget - agentStatus.spent;
@@ -581,11 +571,12 @@ export default function AgentPage() {
             <Input
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Tell your agent what to do..."
+              placeholder={chatLoading ? "Agent is thinking..." : "Tell your agent what to do..."}
               className="flex-1"
+              disabled={chatLoading}
             />
-            <Button type="submit" size="icon" className="shrink-0">
-              <Send className="w-4 h-4" />
+            <Button type="submit" size="icon" className="shrink-0" disabled={chatLoading}>
+              {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
           </form>
         </Card>

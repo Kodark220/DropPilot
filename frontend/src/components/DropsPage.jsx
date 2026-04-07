@@ -177,7 +177,7 @@ function DropCard({ drop, onPurchase, onAutoBuy, index }) {
 }
 
 export default function DropsPage() {
-  const { purchase, getAllDrops } = useDropsContract();
+  const { purchase, getAllDrops, getAgentWallet } = useDropsContract();
   const { address } = useInterwovenKit();
   const toast = useToast();
   const [drops, setDrops] = useState([]);
@@ -221,6 +221,19 @@ export default function DropsPage() {
       return;
     }
     try {
+      // Check if user has authorized the agent on-chain
+      let agentWallet;
+      try {
+        agentWallet = await getAgentWallet(address);
+      } catch {
+        // get_agent_wallet throws if no AgentWallet resource exists
+        agentWallet = null;
+      }
+      if (!agentWallet || !agentWallet.active) {
+        toast.warning('You need to authorize and fund the agent first! Go to the Agent page to set it up.');
+        return;
+      }
+
       const res = await fetch(`${AGENT_API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -232,7 +245,7 @@ export default function DropsPage() {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      toast.success(`Agent registered for drop #${dropId}! Watching ${data.watching?.length || 1} drop(s). Make sure you've set up and funded your agent on the Agent page.`);
+      toast.success(`Agent watching drop #${dropId}! Watching ${data.watching?.length || 1} drop(s) total.`);
     } catch (err) {
       toast.error(`Auto-buy registration failed: ${err.message}`);
     }
