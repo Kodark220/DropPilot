@@ -22,7 +22,7 @@ services:
       - key: GAS_DENOM
         value: uinit
       - key: POLL_INTERVAL_MS
-        value: "5000"
+        value: "3000"
       - key: CORS_ORIGIN
         sync: false
       - key: DATA_DIR

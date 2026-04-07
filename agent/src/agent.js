@@ -20,7 +20,7 @@ const MODULE = process.env.MODULE_ADDRESS;
 const CHAIN_ID = process.env.CHAIN_ID || 'initiation-2';
 const GAS_DENOM = process.env.GAS_DENOM || 'uinit';
 const MNEMONIC = process.env.AGENT_MNEMONIC;
-const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '15000');
+const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '3000');
 const PORT = parseInt(process.env.PORT || process.env.AGENT_PORT || '3100');
 const CORS_ORIGIN = (process.env.CORS_ORIGIN || '*').replace(/\/+$/, '');
 
@@ -190,28 +190,52 @@ async function executeAgentPurchase(ownerAddr, dropId, quantity = 1) {
 }
 
 // ==================== Scanning ====================
+// Cache drops that are done (ended/cancelled/sold out) to avoid re-fetching
+const skipDropIds = new Set();
+
 async function scanDrops() {
   const userCount = registeredUsers.size;
   if (userCount === 0) return;
-  console.log(`[Agent] Scanning drops... (${userCount} user${userCount !== 1 ? 's' : ''})`);
 
   const nextId = await getNextDropId();
   const now = Math.floor(Date.now() / 1000);
 
+  // Fetch all non-skipped drops in parallel
+  const idsToFetch = [];
   for (let id = 1; id < nextId; id++) {
+    if (!skipDropIds.has(id)) idsToFetch.push(id);
+  }
+
+  const dropResults = await Promise.all(idsToFetch.map(async (id) => {
     const drop = await getDrop(id);
-    if (!drop) continue;
+    return { id, drop };
+  }));
+
+  const liveDrops = [];
+  for (const { id, drop } of dropResults) {
+    if (!drop) { skipDropIds.add(id); continue; }
 
     const startTime = Number(drop.start_time || drop.startTime || 0);
     const endTime = Number(drop.end_time || drop.endTime || 0);
     const sold = Number(drop.sold || 0);
     const totalSupply = Number(drop.total_supply || drop.totalSupply || 0);
 
-    const isLive = drop.active && now >= startTime && now <= endTime;
-    const hasSupply = sold < totalSupply;
-    if (!isLive || !hasSupply) continue;
+    // Permanently skip cancelled, ended, or sold-out drops
+    if (!drop.active) { skipDropIds.add(id); continue; }
+    if (now > endTime) { skipDropIds.add(id); continue; }
+    if (sold >= totalSupply) { skipDropIds.add(id); continue; }
 
-    // Process each registered user sequentially (to avoid sequence number conflicts)
+    const isLive = now >= startTime && now <= endTime;
+    if (!isLive) continue; // upcoming — don't skip, check again next poll
+
+    liveDrops.push({ id, drop });
+  }
+
+  if (liveDrops.length === 0) return;
+  console.log(`[Agent] Found ${liveDrops.length} live drop(s), processing for ${userCount} user(s)`);
+
+  // Process each live drop for each user (sequential to avoid sequence number conflicts)
+  for (const { id, drop } of liveDrops) {
     for (const [userAddr, prefs] of registeredUsers) {
       await processDropForUser(id, drop, userAddr, prefs);
     }
