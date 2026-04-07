@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" fill="none">
+  <defs>
+    <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#d946ef"/>
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#f0abfc"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Mini drop icon -->
+  <path d="M24 6 C24 6 12 20 12 28 C12 34 17 38 24 38 C31 38 36 34 36 28 C36 20 24 6 24 6Z" fill="url(#dg)"/>
+  <!-- Mini bot visor -->
+  <rect x="17" y="25" width="14" height="6" rx="3" fill="#0D0D0D" opacity="0.7"/>
+  <circle cx="21" cy="28" r="1.5" fill="url(#bg)"/>
+  <circle cx="27" cy="28" r="1.5" fill="url(#bg)"/>
+  <!-- Mini antenna -->
+  <line x1="24" y1="25" x2="24" y2="21" stroke="url(#bg)" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="24" cy="20" r="1.5" fill="url(#bg)"/>
+
+  <!-- Text -->
+  <text x="48" y="35" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="28" fill="white">Drop<tspan fill="url(#dg)">Pilot</tspan></text>
+</svg>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="dropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#d946ef"/>
+    </linearGradient>
+    <linearGradient id="botGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#f0abfc"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#d946ef" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#0D0D0D"/>
+  <circle cx="256" cy="256" r="240" stroke="url(#dropGrad)" stroke-width="3" fill="none" opacity="0.4"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="256" cy="256" r="220" stroke="url(#dropGrad)" stroke-width="1" fill="none" opacity="0.15"/>
+
+  <!-- Drop shape - main body -->
+  <path d="M256 72 C256 72 148 200 148 296 C148 356 196 408 256 408 C316 408 364 356 364 296 C364 200 256 72 256 72Z" 
+        fill="url(#dropGrad)" filter="url(#glow)"/>
+  
+  <!-- Drop highlight -->
+  <path d="M256 100 C256 100 172 210 172 296 C172 342 210 382 256 382" 
+        fill="none" stroke="white" stroke-width="2" opacity="0.15"/>
+  
+  <!-- Inner drop shine -->
+  <ellipse cx="220" cy="260" rx="28" ry="50" fill="white" opacity="0.08" transform="rotate(-15 220 260)"/>
+
+  <!-- Bot face visor -->
+  <rect x="196" y="255" width="120" height="52" rx="26" fill="#0D0D0D" opacity="0.7"/>
+  
+  <!-- Bot eyes -->
+  <circle cx="228" cy="281" r="12" fill="url(#botGrad)"/>
+  <circle cx="284" cy="281" r="12" fill="url(#botGrad)"/>
+  
+  <!-- Eye glints -->
+  <circle cx="224" cy="277" r="4" fill="white" opacity="0.8"/>
+  <circle cx="280" cy="277" r="4" fill="white" opacity="0.8"/>
+
+  <!-- Scanning line -->
+  <line x1="210" y1="310" x2="302" y2="310" stroke="url(#botGrad)" stroke-width="2" opacity="0.4" stroke-dasharray="4 4"/>
+
+  <!-- Antenna -->
+  <line x1="256" y1="255" x2="256" y2="228" stroke="url(#botGrad)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="256" cy="222" r="6" fill="url(#botGrad)"/>
+  <circle cx="256" cy="222" r="3" fill="white" opacity="0.6"/>
+
+  <!-- Speed lines (auto-buy speed) -->
+  <line x1="100" y1="200" x2="130" y2="210" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+  <line x1="90" y1="260" x2="125" y2="260" stroke="#a855f7" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <line x1="100" y1="320" x2="130" y2="310" stroke="#d946ef" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+
+  <line x1="412" y1="200" x2="382" y2="210" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+  <line x1="422" y1="260" x2="387" y2="260" stroke="#a855f7" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <line x1="412" y1="320" x2="382" y2="310" stroke="#d946ef" stroke-width="2" stroke-linecap="round" opacity="0.2"/>
+</svg>

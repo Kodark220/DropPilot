@@ -36,13 +36,8 @@ function App() {
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#09090b]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-shadow duration-300">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">
-              Drop<span className="text-violet-400">Pilot</span>
-            </span>
+          <Link to="/" className="flex items-center group">
+            <img src="/logo-wordmark.svg" alt="DropPilot" className="h-9 group-hover:opacity-90 transition-opacity duration-300" />
           </Link>
 
           {/* Nav */}
