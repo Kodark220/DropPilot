@@ -9,5 +9,5 @@
   "native_feature": "auto-signing",
   "core_logic_path": "contracts/sources/drops.move",
   "native_feature_frontend_path": "frontend/src/components/AgentPage.jsx",
-  "demo_video_url": "https://youtu.be/YOUR_DEMO_VIDEO"
+  "demo_video_url": "https://youtu.be/vke3d-c5DGQ"
 }
