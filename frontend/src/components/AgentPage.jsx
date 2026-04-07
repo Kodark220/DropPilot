@@ -323,7 +323,7 @@ export default function AgentPage() {
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">Budget (INIT)</p>
                     </div>
                     <div className="text-center p-3 rounded-xl bg-white/[0.02]">
-                      <p className="text-2xl font-bold text-emerald-400">{remaining}</p>
+                      <p className="text-2xl font-bold text-violet-400">{remaining}</p>
                       <p className="text-[10px] text-slate-500 uppercase tracking-wider">Remaining</p>
                     </div>
                   </div>
@@ -429,7 +429,7 @@ export default function AgentPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Coins className="w-4 h-4 text-emerald-400" />
+              <Coins className="w-4 h-4 text-violet-400" />
               Fund Agent Wallet
             </CardTitle>
           </CardHeader>

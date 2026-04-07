@@ -115,7 +115,7 @@ export default function MyItemsPage() {
           <span>{items.reduce((sum, i) => sum + i.quantity, 0)} items owned</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Store className="w-3.5 h-3.5 text-emerald-400" />
+          <Store className="w-3.5 h-3.5 text-violet-400" />
           <span>{items.length} unique drops</span>
         </div>
       </motion.div>

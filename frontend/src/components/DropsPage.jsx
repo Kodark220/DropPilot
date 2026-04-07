@@ -145,7 +145,7 @@ function DropCard({ drop, onPurchase, onAutoBuy, index }) {
             </div>
             <Progress
               value={progress}
-              indicatorClassName={status === 'live' ? 'from-emerald-500 to-cyan-500' : undefined}
+              indicatorClassName={status === 'live' ? 'from-emerald-500 to-emerald-400' : undefined}
             />
           </div>
 
@@ -262,7 +262,7 @@ export default function DropsPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-violet-950/40 via-[#0D0D0D] to-indigo-950/30 p-8 md:p-12"
+        className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-violet-950/40 via-[#0D0D0D] to-fuchsia-950/30 p-8 md:p-12"
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.08),transparent_50%)]" />
         <div className="relative z-10 max-w-2xl">

@@ -10,7 +10,7 @@ const Progress = React.forwardRef(({ className, value, indicatorClassName, ...pr
   >
     <ProgressPrimitive.Indicator
       className={cn(
-        'h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all duration-500 ease-out',
+        'h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500 ease-out',
         indicatorClassName
       )}
       style={{ width: `${value || 0}%` }}

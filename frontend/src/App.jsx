@@ -28,12 +28,12 @@ function App() {
       {/* Ambient background gradients */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-[40%] -left-[20%] w-[60%] h-[60%] rounded-full bg-violet-600/[0.04] blur-[120px]" />
-        <div className="absolute -bottom-[30%] -right-[20%] w-[50%] h-[50%] rounded-full bg-indigo-600/[0.03] blur-[120px]" />
+        <div className="absolute -bottom-[30%] -right-[20%] w-[50%] h-[50%] rounded-full bg-violet-600/[0.03] blur-[120px]" />
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] rounded-full bg-fuchsia-600/[0.02] blur-[100px]" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#09090b]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#0D0D0D]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center group">
@@ -93,7 +93,7 @@ function App() {
       </header>
 
       {/* Mobile nav */}
-      <nav className="md:hidden sticky top-16 z-40 border-b border-white/[0.06] bg-[#09090b]/80 backdrop-blur-xl px-4 py-2">
+      <nav className="md:hidden sticky top-16 z-40 border-b border-white/[0.06] bg-[#0D0D0D]/80 backdrop-blur-xl px-4 py-2">
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

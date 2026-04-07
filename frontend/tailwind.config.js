@@ -5,45 +5,15 @@ export default {
     extend: {
       colors: {
         border: 'rgba(255,255,255,0.06)',
-        ring: 'rgba(232,149,109,0.5)',
+        ring: 'rgba(124,58,237,0.5)',
         background: '#0D0D0D',
         foreground: '#fafafa',
-        primary: { DEFAULT: '#E8956D', foreground: '#ffffff' },
-        secondary: { DEFAULT: '#1C1510', foreground: '#E8C5A8' },
+        primary: { DEFAULT: '#7c3aed', foreground: '#ffffff' },
+        secondary: { DEFAULT: '#1a1025', foreground: '#c4b5fd' },
         muted: { DEFAULT: '#1c1917', foreground: '#a8a29e' },
-        accent: { DEFAULT: '#D07A54', foreground: '#FDE8D8' },
+        accent: { DEFAULT: '#a855f7', foreground: '#faf5ff' },
         destructive: { DEFAULT: '#dc2626', foreground: '#fecaca' },
         card: { DEFAULT: 'rgba(255,255,255,0.03)', foreground: '#fafafa' },
-        // Initia warm coral palette — overrides Tailwind's violet
-        violet: {
-          100: '#FDE8D8',
-          200: '#F5CDB0',
-          300: '#F0B994',
-          400: '#E8A37C',
-          500: '#E8956D',
-          600: '#D07A54',
-          700: '#B5653F',
-          800: '#8C4E30',
-          900: '#5C3521',
-          950: '#1A110C',
-        },
-        // Initia deeper warm — overrides Tailwind's indigo
-        indigo: {
-          100: '#FADDC8',
-          200: '#E8C5A8',
-          300: '#D4A882',
-          400: '#C09068',
-          500: '#A87A56',
-          600: '#8C6544',
-          700: '#6E4F34',
-          800: '#523A26',
-          900: '#38271A',
-          950: '#140E09',
-        },
-        // Warm complement for fuchsia
-        fuchsia: {
-          600: '#C06040',
-        },
       },
       borderRadius: {
         lg: '1rem',
