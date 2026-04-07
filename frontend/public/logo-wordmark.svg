@@ -22,5 +22,5 @@
   <circle cx="24" cy="20" r="1.5" fill="url(#bg)"/>
 
   <!-- Text -->
-  <text x="48" y="35" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="28" fill="url(#dg)">DropPilot</text>
+  <text x="48" y="35" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="28" fill="white">Drop<tspan fill="url(#dg)">Pilot</tspan></text>
 </svg>
