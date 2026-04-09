@@ -169,7 +169,7 @@ export default function AgentPage() {
       const budgetMicro = parseInt(budget) * 1_000_000;
       // 1. Authorize agent on-chain
       await authorizeAgent(agentServiceAddress, budgetMicro);
-      if (autoSign?.enable) await autoSign.enable();
+      try { if (autoSign?.enable) await autoSign.enable(); } catch (e) { console.warn('autoSign enable skipped:', e.message); }
 
       // 2. Register with agent backend
       try {
@@ -198,7 +198,7 @@ export default function AgentPage() {
   const handleRevoke = async () => {
     try {
       await revokeAgent();
-      if (autoSign?.disable) await autoSign.disable();
+      try { if (autoSign?.disable) await autoSign.disable(); } catch (e) { console.warn('autoSign disable skipped:', e.message); }
 
       // Unregister from agent backend
       try {
