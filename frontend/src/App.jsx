@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Sparkles, Store, Bot, Package, Wallet, ChevronRight, Zap } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Separator } from './components/ui/separator';
+import NetworkSwitcher from './components/NetworkSwitcher';
 import DropsPage from './components/DropsPage';
 import CreateDropPage from './components/CreateDropPage';
 import MarketplacePage from './components/MarketplacePage';
@@ -75,20 +76,23 @@ function App() {
             })}
           </nav>
 
-          {/* Wallet */}
-          {address ? (
-            <Button variant="secondary" size="sm" onClick={openWallet} className="gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-xs">
-                {username || `${address.slice(0, 6)}...${address.slice(-4)}`}
-              </span>
-            </Button>
-          ) : (
-            <Button onClick={openConnect} size="sm" className="gap-2">
-              <Wallet className="w-4 h-4" />
-              Connect
-            </Button>
-          )}
+          {/* Network + Wallet */}
+          <div className="flex items-center gap-3">
+            <NetworkSwitcher />
+            {address ? (
+              <Button variant="secondary" size="sm" onClick={openWallet} className="gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-mono text-xs">
+                  {username || `${address.slice(0, 6)}...${address.slice(-4)}`}
+                </span>
+              </Button>
+            ) : (
+              <Button onClick={openConnect} size="sm" className="gap-2">
+                <Wallet className="w-4 h-4" />
+                Connect
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 

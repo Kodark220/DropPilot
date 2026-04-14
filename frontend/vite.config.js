@@ -4,39 +4,30 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
-  const LCD = env.VITE_LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
-  const RPC = env.VITE_RPC_ENDPOINT || 'https://rpc.testnet.initia.xyz';
-  const CHAIN_ID = env.VITE_CHAIN_ID || 'initiation-2';
-  const GAS_DENOM = env.VITE_GAS_DENOM || 'uinit';
-
-  // Chain definition (adapts to rollup or L1 based on env)
-  const isRollup = CHAIN_ID !== 'initiation-2';
-  const CHAIN_DATA = {
-    chain_id: CHAIN_ID,
-    chain_name: isRollup ? 'droppilot' : 'initia',
+  // Both chain definitions for network switching
+  const L1_CHAIN = {
+    chain_id: 'initiation-2',
+    chain_name: 'initia',
     pretty_name: 'DropPilot on Initia',
     network_type: 'testnet',
     bech32_prefix: 'init',
-    fees: {
-      fee_tokens: [{
-        denom: GAS_DENOM,
-        fixed_min_gas_price: 0.015,
-        low_gas_price: 0.015,
-        average_gas_price: 0.015,
-        high_gas_price: 0.04,
-      }],
-    },
-    apis: {
-      rpc: [{ address: RPC }],
-      rest: [{ address: LCD }],
-      indexer: [{ address: isRollup ? LCD : 'https://indexer.initiation-2.initia.xyz' }],
-    },
-    metadata: {
-      is_l1: true,
-    },
+    fees: { fee_tokens: [{ denom: 'uinit', fixed_min_gas_price: 0.015, low_gas_price: 0.015, average_gas_price: 0.015, high_gas_price: 0.04 }] },
+    apis: { rpc: [{ address: 'https://rpc.testnet.initia.xyz' }], rest: [{ address: 'https://rest.testnet.initia.xyz' }], indexer: [{ address: 'https://indexer.initiation-2.initia.xyz' }] },
+    metadata: { is_l1: true },
   };
 
-  const chainsJson = JSON.stringify([CHAIN_DATA]);
+  const ROLLUP_CHAIN = {
+    chain_id: 'droppilot-1',
+    chain_name: 'droppilot',
+    pretty_name: 'DropPilot Rollup',
+    network_type: 'testnet',
+    bech32_prefix: 'init',
+    fees: { fee_tokens: [{ denom: 'umin', fixed_min_gas_price: 0.15, low_gas_price: 0.15, average_gas_price: 0.15, high_gas_price: 0.2 }] },
+    apis: { rpc: [{ address: 'http://localhost:26657' }], rest: [{ address: 'http://localhost:1317' }], indexer: [{ address: 'http://localhost:1317' }] },
+    metadata: { is_l1: true },
+  };
+
+  const chainsJson = JSON.stringify([L1_CHAIN, ROLLUP_CHAIN]);
   const profilesJson = JSON.stringify([]);
 
   // Dev: intercept requests with mock data

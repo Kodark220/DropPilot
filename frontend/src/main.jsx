@@ -11,21 +11,22 @@ import {
   InterwovenKitProvider,
 } from '@initia/interwovenkit-react';
 import InterwovenKitStyles from '@initia/interwovenkit-react/styles.js';
+import { NetworkProvider, getSelectedNetwork } from './contexts/NetworkContext';
 import App from './App';
 import './index.css';
 
-// ===== CONFIGURATION (driven by env vars for production) =====
-export const MODULE_ADDRESS = import.meta.env.VITE_MODULE_ADDRESS || 'init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf';
-export const GAS_DENOM = import.meta.env.VITE_GAS_DENOM || 'uinit';
-export const CHAIN_ID = import.meta.env.VITE_CHAIN_ID || 'initiation-2';
-export const LCD_ENDPOINT = import.meta.env.VITE_LCD_ENDPOINT || 'https://rest.testnet.initia.xyz';
-export const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'https://rpc.testnet.initia.xyz';
-export const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'https://droppilot.onrender.com';
-// ==============================================================
+// ===== ACTIVE NETWORK CONFIG =====
+const NET = getSelectedNetwork();
+export const MODULE_ADDRESS = NET.moduleAddress;
+export const GAS_DENOM = NET.gasDenom;
+export const CHAIN_ID = NET.chainId;
+export const LCD_ENDPOINT = NET.lcdEndpoint;
+export const RPC_ENDPOINT = NET.rpcEndpoint;
+export const AGENT_API_URL = NET.agentApiUrl;
+// ==================================
 
 // Intercept endpoints the rollup doesn't implement
-const isRollup = CHAIN_ID !== 'initiation-2';
-if (isRollup) {
+if (NET.isRollup) {
   const _fetch = window.fetch;
   window.fetch = function (url, ...args) {
     const u = typeof url === 'string' ? url : url?.url || '';
@@ -39,10 +40,10 @@ if (isRollup) {
   };
 }
 
-// Chain definition — DropPilot rollup (or L1 depending on env)
+// Chain definition
 const INITIA_DROPS_CHAIN = {
   chain_id: CHAIN_ID,
-  chain_name: isRollup ? 'droppilot' : 'initia',
+  chain_name: NET.chainName,
   pretty_name: 'DropPilot on Initia',
   network_type: 'testnet',
   bech32_prefix: 'init',
@@ -50,17 +51,17 @@ const INITIA_DROPS_CHAIN = {
     fee_tokens: [
       {
         denom: GAS_DENOM,
-        fixed_min_gas_price: isRollup ? 0.15 : 0.015,
-        low_gas_price: isRollup ? 0.15 : 0.015,
-        average_gas_price: isRollup ? 0.15 : 0.015,
-        high_gas_price: isRollup ? 0.2 : 0.04,
+        fixed_min_gas_price: NET.gasPrice,
+        low_gas_price: NET.gasPrice,
+        average_gas_price: NET.gasPrice,
+        high_gas_price: NET.gasPrice * 1.5,
       },
     ],
   },
   apis: {
     rpc: [{ address: RPC_ENDPOINT }],
     rest: [{ address: LCD_ENDPOINT }],
-    indexer: [{ address: isRollup ? LCD_ENDPOINT : 'https://indexer.initiation-2.initia.xyz' }],
+    indexer: [{ address: NET.indexer }],
   },
   metadata: {
     is_l1: true,
@@ -153,11 +154,13 @@ function Providers({ children }) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Providers>
-      <ToastProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </ToastProvider>
+      <NetworkProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ToastProvider>
+      </NetworkProvider>
     </Providers>
   </React.StrictMode>,
 );
