@@ -12,7 +12,9 @@ DropPilot lets users delegate drop purchases to an on-chain authorized agent tha
 
 > **Live Demo:** [https://drop-pilot-ten.vercel.app](https://drop-pilot-ten.vercel.app)  
 > **Agent API:** [https://droppilot.onrender.com/health](https://droppilot.onrender.com/health)  
-> **Chain:** DropPilot Rollup (`droppilot-1`) on Initia Testnet
+> **Rollup Chain:** `droppilot-1` (DropPilot Move Rollup, Bridge ID `1831`)
+
+> **Deployment note:** The smart contract is deployed on **both** the DropPilot rollup (`droppilot-1`) and Initia L1 testnet (`initiation-2`). The live demo (Vercel + Render) points to the L1 deployment so judges can interact with it immediately without running a local node. The rollup deployment demonstrates appchain capability — the same contract, same functionality, running on our own chain. See [Deployed Addresses](#deployed-addresses) for both sets of details.
 
 ---
 
@@ -120,14 +122,25 @@ All data is queried from chain — zero mock data.
 
 ## Deployed Addresses
 
+**Rollup (`droppilot-1`)** — own appchain via Initia rollup:
+
+| Resource | Address |
+|----------|---------|
+| Module | `init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf` |
+| Rollup Chain | `droppilot-1` (Initia Move Rollup) |
+| Bridge ID | `1831` |
+| Deploy TX | `9C5485A7707940FC41DA38D0AC4DE33906E46D922FEBE9AC59A929A80EB47F11` |
+
+**L1 Testnet (`initiation-2`)** — used by the live demo so judges can try it instantly:
+
 | Resource | Address |
 |----------|---------|
 | Module | `init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf` |
 | Agent Wallet | `init1sutlyucfyx76dya790w7hung64d6zlyqc267hm` |
-| Rollup Chain | `droppilot-1` (Initia Move Rollup) |
-| Bridge ID | `1831` |
 | L1 Chain | `initiation-2` (Initia Testnet) |
-| Rollup Deploy TX | `9C5485A7707940FC41DA38D0AC4DE33906E46D922FEBE9AC59A929A80EB47F11` |
+| Deploy TX | `D3C8C860EDF4BA88DF156AC7F19C83C5E519585514EB7217540F3042243237FB` |
+
+> The same module address is used on both chains (same deployer key). The live Vercel/Render deployment talks to L1 so it's accessible to anyone without running a local rollup node.
 
 ---
 
