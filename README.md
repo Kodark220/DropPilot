@@ -12,7 +12,7 @@ DropPilot lets users delegate drop purchases to an on-chain authorized agent tha
 
 > **Live Demo:** [https://drop-pilot-ten.vercel.app](https://drop-pilot-ten.vercel.app)  
 > **Agent API:** [https://droppilot.onrender.com/health](https://droppilot.onrender.com/health)  
-> **Chain:** Initia Testnet (`initiation-2`)
+> **Chain:** DropPilot Rollup (`droppilot-1`) on Initia Testnet
 
 ---
 
@@ -43,21 +43,23 @@ The agent operates within strict on-chain budget constraints set by each user �
 
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Frontend   │────▶│   Agent Service  │────▶│  Initia Chain   │
-│  React/Vite  │     │    Node.js       │     │  Move Contract  │
-│   Vercel     │     │    Render        │     │  initia_drops   │
-└─────────────┘     └──────────────────┘     └─────────────────┘
+│   Frontend   │────▶│   Agent Service  │────▶│ DropPilot Rollup │
+│  React/Vite  │     │    Node.js       │     │  Move Contract   │
+│   Vercel     │     │    Render        │     │  droppilot-1     │
+└─────────────┘     └──────────────────┘     └──────────────────┘
        │                     │                        │
        │    Wallet signing   │   agent_purchase()     │
        └─────────────────────┼────────────────────────┘
                              │
-                     On-chain authorization
-                     (budget-capped delegation)
+                     On-chain authorization        ┌──────────────┐
+                     (budget-capped delegation) ───│  Initia L1   │
+                                                   │ (IBC Bridge) │
+                                                   └──────────────┘
 ```
 
 ### Smart Contract (`contracts/sources/drops.move`)
 
-Written in Move, deployed on Initia L1 testnet. Manages:
+Written in Move, deployed on DropPilot rollup (`droppilot-1`). Manages:
 
 | Function | Description |
 |----------|-------------|
@@ -107,7 +109,7 @@ All data is queried from chain — zero mock data.
 
 | Layer | Technology |
 |-------|-----------|
-| Blockchain | Initia L1 (Move VM) |
+| Blockchain | Initia Rollup — `droppilot-1` (Move VM) |
 | Smart Contract | Move (Aptos-style) |
 | Frontend | React 19, Vite, TailwindCSS, Framer Motion |
 | Wallet | InterwovenKit (Initia wallet adapter) |
@@ -122,9 +124,10 @@ All data is queried from chain — zero mock data.
 |----------|---------|
 | Module | `init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf` |
 | Agent Wallet | `init1sutlyucfyx76dya790w7hung64d6zlyqc267hm` |
-| Chain | `initiation-2` (Initia Testnet) |
-| LCD | `https://rest.testnet.initia.xyz` |
-| RPC | `https://rpc.testnet.initia.xyz` |
+| Rollup Chain | `droppilot-1` (Initia Move Rollup) |
+| Bridge ID | `1831` |
+| L1 Chain | `initiation-2` (Initia Testnet) |
+| Rollup Deploy TX | `9C5485A7707940FC41DA38D0AC4DE33906E46D922FEBE9AC59A929A80EB47F11` |
 
 ---
 
@@ -140,11 +143,13 @@ All data is queried from chain — zero mock data.
 ```bash
 cd contracts
 # Deploy using initiad CLI
-initiad tx move publish \
-  --from deployer \
-  --gas auto --gas-adjustment 1.5 --gas-prices 0.015uinit \
-  --chain-id initiation-2 \
-  --node https://rpc.testnet.initia.xyz:443
+# Deploy using minitiad CLI to the droppilot-1 rollup
+minitiad tx move publish build/initia_drops/bytecode_modules/drops.mv \
+  --from gas-station \
+  --keyring-backend test \
+  --gas auto --gas-adjustment 1.5 --gas-prices 0.15umin \
+  --chain-id droppilot-1 \
+  --node http://localhost:26657
 ```
 
 ### Agent
@@ -213,6 +218,28 @@ This is a known simplification for the hackathon. The budget-cap enforcement is 
 | Kodark | Solo Builder | [@Kodark220](https://github.com/Kodark220) |
 
 Built for the Initia Hackathon on DoraHacks.
+
+---
+
+## Initia Hackathon Submission
+
+- **Project Name**: DropPilot
+
+### Project Overview
+
+DropPilot is an autonomous AI agent for drop commerce on Initia. It solves the problem of users missing time-sensitive on-chain drops by delegating purchases to a budget-capped agent that monitors, evaluates, and auto-buys drops in real-time. Built for anyone participating in drop minting — collectors, traders, and casual users who want a trustless "set it and forget it" experience.
+
+### Implementation Detail
+
+- **The Custom Implementation**: DropPilot implements a full agent-delegation system in Move — users authorize the agent with a spending budget, the agent autonomously polls and purchases drops on their behalf, and all spending limits are enforced on-chain. The secondary marketplace, chat interface, and parallel drop scanning are original functionality.
+- **The Native Feature**: DropPilot uses **auto-signing** to let the agent execute `agent_purchase` transactions without per-transaction user approval. This makes the autonomous buying loop seamless — the agent can act instantly when a drop goes live, which is critical for time-sensitive mints.
+
+### How to Run Locally
+
+1. Clone the repo and install dependencies: `cd agent && npm install` then `cd frontend && npm install`
+2. Copy `.env.example` to `.env` in both `agent/` and `frontend/`, fill in your mnemonic and module address
+3. Start the agent: `cd agent && npm run dev`
+4. Start the frontend: `cd frontend && npm run dev` — open `http://localhost:5173`
 
 ---
 
