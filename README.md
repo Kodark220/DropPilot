@@ -191,6 +191,21 @@ npm run dev
 
 ---
 
+## Funding Model & Roadmap
+
+**Current model (testnet):** Users fund a shared agent wallet. The agent pays for purchases from this pool. Per-user budgets are enforced on-chain — the agent cannot exceed any user's authorized amount — but the wallet balance itself is pooled.
+
+**What this means:** If two users each deposit 5 INIT, the agent has 10 INIT total. It can only spend up to each user's budget cap, but the underlying funds are not isolated per user.
+
+**Production roadmap:**
+- **Per-user escrow** — Move contract holds each user's funds separately. The agent can only draw from a user's own escrow balance, not the shared pool.
+- **Deposit ledger** — On-chain tracking of how much each user deposited, with a withdraw function to reclaim unused funds.
+- **Auto-refund on revoke** — When a user revokes agent access, their unspent deposit is returned automatically.
+
+This is a known simplification for the hackathon. The budget-cap enforcement is fully on-chain today; fund isolation is the next step.
+
+---
+
 ## Team
 
 | Name | Role | GitHub |
