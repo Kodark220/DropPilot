@@ -288,8 +288,70 @@ async function processDropForUser(dropId, drop, userAddr, prefs) {
 }
 
 async function scanSecondaryMarket() {
-  // Secondary market scanning placeholder
   if (registeredUsers.size === 0) return;
+
+  let nextListingId;
+  try {
+    const result = await queryView('get_next_listing_id');
+    nextListingId = parseInt(JSON.parse(result.data));
+  } catch { return; }
+
+  if (nextListingId <= 1) return;
+
+  for (let id = 1; id < nextListingId; id++) {
+    let listing;
+    try {
+      const result = await queryView('get_listing', [String(id)]);
+      listing = JSON.parse(result.data);
+    } catch { continue; }
+
+    if (!listing || !listing.active) continue;
+
+    const listingPrice = Number(listing.price_per_unit || listing.pricePerUnit || 0) * Number(listing.quantity || 1);
+
+    for (const [userAddr, prefs] of registeredUsers) {
+      if (!prefs.autoBuyEnabled) continue;
+
+      const dropId = Number(listing.drop_id || listing.dropId);
+      const isWatched = !prefs.watchDropIds?.length || prefs.watchDropIds.includes(dropId);
+      if (!isWatched) continue;
+
+      const withinMaxPrice = listingPrice <= (prefs.maxPricePerItem || Infinity);
+      if (!withinMaxPrice) continue;
+
+      const purchaseKey = `${userAddr}:listing:${id}`;
+      if (purchasedSet.has(purchaseKey)) continue;
+
+      try {
+        const onChainWallet = await getAgentWalletOnChain(userAddr);
+        if (!onChainWallet || !onChainWallet.active) continue;
+
+        const spent = Number(onChainWallet.spent || 0);
+        const budget = Number(onChainWallet.budget || 0);
+        if (spent + listingPrice > budget) continue;
+
+        console.log(`[Agent] Buying listing #${id} (drop #${dropId}) for ${userAddr.slice(0, 12)}...`);
+
+        const msg = new MsgExecute(
+          AGENT_ADDRESS,
+          MODULE,
+          'drops',
+          'agent_buy_listing',
+          [],
+          [
+            bcs.address().serialize(userAddr).toBase64(),
+            bcs.u64().serialize(id).toBase64(),
+          ]
+        );
+        const signedTx = await agentWallet.createAndSignTx({ msgs: [msg] });
+        const result = await lcd.tx.broadcastSync(signedTx);
+        console.log(`[Agent] Listing purchase TX: ${result.txhash}`);
+        purchasedSet.add(purchaseKey);
+      } catch (err) {
+        console.error(`[Agent] Error on listing #${id} for ${userAddr.slice(0, 12)}...:`, err.message);
+      }
+    }
+  }
 }
 
 // ==================== Chat Handler ====================

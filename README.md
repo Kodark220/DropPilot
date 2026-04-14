@@ -209,6 +209,33 @@ npm run dev
 
 ---
 
+## Target Market & Positioning
+
+**Who is this for?**
+
+- **Drop collectors** who miss time-sensitive mints because of timezone differences, work schedules, or simply being offline when a drop goes live.
+- **Active traders** who want automated secondary market sniping within defined price limits.
+- **Creators and brands** who benefit from higher fill rates on their drops — more buyers don't miss out, meaning more revenue and engagement.
+
+**Competitive landscape:**
+
+Existing solutions for automated minting (bots, browser extensions, Discord alerts) are either:
+1. **Centralized** — users trust a service with their private keys or API access. If the service is compromised, funds are at risk.
+2. **Manual** — alerts tell you a drop is live, but you still have to execute the purchase yourself.
+3. **Unregulated** — bots can drain wallets with no spending limits.
+
+DropPilot is different because the spending cap is **enforced on-chain by the Move contract**. The agent literally cannot overspend. Users set a budget, the contract enforces it, and revocation is instant. No trust required beyond the immutable contract code.
+
+**Go-to-market:**
+
+1. **Initia ecosystem first** — target early Initia rollup projects launching drops (NFT collections, token launches, limited merch).
+2. **Creator partnerships** — offer DropPilot as a "never miss this mint" feature that creators embed in their launch pages.
+3. **Community growth** — Discord/Twitter presence in drop-hunting communities. The agent chat interface lowers the barrier for non-technical users.
+
+**Beyond crypto:** The autonomous agent + on-chain budget enforcement pattern applies to any time-sensitive commerce: sneaker drops, concert ticket releases, flash sales. Blockchain removes the need to trust a centralized service with your payment methods.
+
+---
+
 ## Funding Model & Roadmap
 
 **Current model (testnet):** Users fund a shared agent wallet. The agent pays for purchases from this pool. Per-user budgets are enforced on-chain — the agent cannot exceed any user's authorized amount — but the wallet balance itself is pooled.

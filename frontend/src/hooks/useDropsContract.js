@@ -36,7 +36,9 @@ function bcsEncodeULEB128(value) {
 function bcsEncodeAddress(addrStr) {
   // Handle hex addresses (0x-prefixed, 20 or 32 bytes)
   if (addrStr.startsWith('0x') || addrStr.startsWith('0X')) {
-    const hex = addrStr.slice(2);
+    let hex = addrStr.slice(2);
+    // Ensure even length (left-pad with 0 if odd)
+    if (hex.length % 2 !== 0) hex = '0' + hex;
     const raw = new Uint8Array(hex.length / 2);
     for (let i = 0; i < raw.length; i++) {
       raw[i] = parseInt(hex.substr(i * 2, 2), 16);

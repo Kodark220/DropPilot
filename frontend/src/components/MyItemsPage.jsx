@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from './Toast';
 import { useInterwovenKit } from '@initia/interwovenkit-react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { GAS_DENOM } from '../main';
 import { motion } from 'framer-motion';
 import { Package, Tag, Store, ShoppingBag, Inbox, Loader2 } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
@@ -72,7 +73,7 @@ export default function MyItemsPage() {
     }
     try {
       const priceMicro = parseInt(price) * 1_000_000;
-      const result = await createListing(dropId, 1, priceMicro, 'uinit');
+      const result = await createListing(dropId, 1, priceMicro, GAS_DENOM);
       toast.success(`Listed! TX: ${result.transactionHash?.slice(0, 16)}...`);
     } catch (err) {
       const msg = err.message || '';

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDropsContract } from '../hooks/useDropsContract';
+import { GAS_DENOM } from '../main';
 import { useToast } from './Toast';
 import { motion } from 'framer-motion';
 import { Sparkles, Package, Clock, Users, Coins, FileText, Loader2 } from 'lucide-react';
@@ -44,7 +45,7 @@ export default function CreateDropPage() {
         name: form.name,
         description: form.description,
         price: priceInMicro,
-        paymentDenom: 'uinit',
+        paymentDenom: GAS_DENOM,
         totalSupply: parseInt(form.totalSupply),
         maxPerUser: parseInt(form.maxPerUser),
         startTime: startTimestamp,

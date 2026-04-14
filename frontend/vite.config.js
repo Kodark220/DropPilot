@@ -9,10 +9,11 @@ export default defineConfig(({ mode }) => {
   const CHAIN_ID = env.VITE_CHAIN_ID || 'initiation-2';
   const GAS_DENOM = env.VITE_GAS_DENOM || 'uinit';
 
-  // L1 chain definition (our contract is deployed directly on L1 testnet)
+  // Chain definition (adapts to rollup or L1 based on env)
+  const isRollup = CHAIN_ID !== 'initiation-2';
   const CHAIN_DATA = {
     chain_id: CHAIN_ID,
-    chain_name: 'initia',
+    chain_name: isRollup ? 'droppilot' : 'initia',
     pretty_name: 'DropPilot on Initia',
     network_type: 'testnet',
     bech32_prefix: 'init',
@@ -28,7 +29,7 @@ export default defineConfig(({ mode }) => {
     apis: {
       rpc: [{ address: RPC }],
       rest: [{ address: LCD }],
-      indexer: [{ address: 'https://indexer.initiation-2.initia.xyz' }],
+      indexer: [{ address: isRollup ? LCD : 'https://indexer.initiation-2.initia.xyz' }],
     },
     metadata: {
       is_l1: true,

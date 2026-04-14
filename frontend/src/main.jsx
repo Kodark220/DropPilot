@@ -23,10 +23,26 @@ export const RPC_ENDPOINT = import.meta.env.VITE_RPC_ENDPOINT || 'https://rpc.te
 export const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'https://droppilot.onrender.com';
 // ==============================================================
 
-// Chain definition — deployed on Initia L1 testnet
+// Intercept endpoints the rollup doesn't implement
+const isRollup = CHAIN_ID !== 'initiation-2';
+if (isRollup) {
+  const _fetch = window.fetch;
+  window.fetch = function (url, ...args) {
+    const u = typeof url === 'string' ? url : url?.url || '';
+    if (u.includes('/initia/tx/v1/gas_prices')) {
+      return Promise.resolve(new Response(
+        JSON.stringify({ gas_prices: [{ denom: GAS_DENOM, amount: '0.15' }] }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+    return _fetch.call(this, url, ...args);
+  };
+}
+
+// Chain definition — DropPilot rollup (or L1 depending on env)
 const INITIA_DROPS_CHAIN = {
   chain_id: CHAIN_ID,
-  chain_name: 'initia',
+  chain_name: isRollup ? 'droppilot' : 'initia',
   pretty_name: 'DropPilot on Initia',
   network_type: 'testnet',
   bech32_prefix: 'init',
@@ -34,17 +50,17 @@ const INITIA_DROPS_CHAIN = {
     fee_tokens: [
       {
         denom: GAS_DENOM,
-        fixed_min_gas_price: 0.015,
-        low_gas_price: 0.015,
-        average_gas_price: 0.015,
-        high_gas_price: 0.04,
+        fixed_min_gas_price: isRollup ? 0.15 : 0.015,
+        low_gas_price: isRollup ? 0.15 : 0.015,
+        average_gas_price: isRollup ? 0.15 : 0.015,
+        high_gas_price: isRollup ? 0.2 : 0.04,
       },
     ],
   },
   apis: {
     rpc: [{ address: RPC_ENDPOINT }],
     rest: [{ address: LCD_ENDPOINT }],
-    indexer: [{ address: 'https://indexer.initiation-2.initia.xyz' }],
+    indexer: [{ address: isRollup ? LCD_ENDPOINT : 'https://indexer.initiation-2.initia.xyz' }],
   },
   metadata: {
     is_l1: true,
