@@ -1,7 +1,7 @@
 {
   "project_name": "DropPilot",
   "repo_url": "https://github.com/Kodark220/DropPilot",
-  "commit_sha": "5602475b3e38918ac4e157c5590e8f471aafcd97",
+  "commit_sha": "030ede05a9e1ab23941c2618208ededf145cd405",
   "rollup_chain_id": "droppilot-1",
   "deployed_address": "init1vhaytr72cd8se33xnleua8m8wxncgmdjtnvlhf",
   "vm": "move",
